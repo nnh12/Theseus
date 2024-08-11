@@ -15,7 +15,9 @@
 extern crate spin;
 extern crate memory;
 extern crate io;
+extern crate libc;
 
+use libc::time_t;
 use core::fmt;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -190,4 +192,17 @@ impl FileOrDir {
             FileOrDir::Dir(_) => true,
         }
     }
+
+/// Returns the size of the file in bytes, or 0 if it is a directory.
+    pub fn get_file_size(file_or_dir: &FileOrDir) -> usize {
+        match file_or_dir {
+            FileOrDir::File(file_ref) => {
+                let file = file_ref.lock();
+                file.len()
+            },
+            FileOrDir::Dir(_) => 4096,
+        }
+    }   
+
+
 }

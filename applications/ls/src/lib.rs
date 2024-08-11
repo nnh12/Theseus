@@ -16,6 +16,8 @@ use fs_node::{FileOrDir, DirRef};
 use getopts::Options;
 use path::Path;
 
+
+
 pub fn main(args: Vec<String>) -> isize {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help menu");
@@ -68,7 +70,10 @@ fn print_children(dir: &DirRef) {
     let mut child_list = dir.lock().list(); 
     child_list.reverse();
     for child in child_list.iter() {
-        writeln!(child_string, "{child}").expect("Failed to write child_string");
+        let child_path = dir.lock().get(child).expect("Failed to get child path");
+      	let size = FileOrDir:: get_file_size(&child_path);
+        writeln!(child_string, "{} ({} bytes)", child, size).expect("Failed to write child_string");
+	//  writeln!(child_string, "{child}").expect("Failed to write child_string");
     }
     println!("{}", child_string);
 }
