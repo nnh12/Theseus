@@ -72,7 +72,9 @@ fn print_children(dir: &DirRef) {
     for child in child_list.iter() {
         let child_path = dir.lock().get(child).expect("Failed to get child path");
       	let size = FileOrDir:: get_file_size(&child_path);
-        writeln!(child_string, "{} ({} bytes)", child, size).expect("Failed to write child_string");
+        let time = FileOrDir:: get_current_time(&child_path);
+        writeln!(child_string, "{} ({} bytes, {:?})", child, size, time).expect("Failed to write child_string");
+        // writeln!(child_string, "{} ({} bytes)", child, size).expect("Failed to write child_string");
 	//  writeln!(child_string, "{child}").expect("Failed to write child_string");
     }
     println!("{}", child_string);

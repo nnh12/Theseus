@@ -15,9 +15,9 @@
 extern crate spin;
 extern crate memory;
 extern crate io;
-extern crate libc;
+extern crate time;
 
-use libc::time_t;
+use time::Instant;
 use core::fmt;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -69,6 +69,11 @@ pub trait FsNode {
     /// This is useful for ensuring correctness when inserting or removing 
     /// files or directories from their parent directory.
     fn set_parent_dir(&mut self, new_parent: WeakDirRef);
+
+    // Get the current time
+    fn get_current_time(&self) -> Instant {
+        Instant::now()
+    }
 }
 
 // Trait for files, implementors of File must also implement FsNode
@@ -162,6 +167,10 @@ impl FsNode for FileOrDir {
             FileOrDir::Dir(dir) => dir.lock().set_parent_dir(new_parent),
         }
     }
+
+    fn get_current_time(&self) -> Instant {
+        Instant::now()
+    }
 }
 
 impl KnownLength for FileOrDir {
@@ -204,5 +213,9 @@ impl FileOrDir {
         }
     }   
 
+    // Get the current time
+    pub fn get_current_time(&self) -> Instant {
+        Instant::now()
+    }
 
 }

@@ -22,5 +22,8 @@ path = "../memory"
 [dependencies.io]
 path = "../io"
 
+[dependencies.time]
+path = "../time"
+
 [lib]
 crate-type = ["rlib"]

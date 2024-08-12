@@ -1250,6 +1250,7 @@ dependencies = [
  "log",
  "memory",
  "spin 0.9.4",
+ "time",
 ]
 
 [[package]]
