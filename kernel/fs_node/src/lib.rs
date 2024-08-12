@@ -168,6 +168,7 @@ impl FsNode for FileOrDir {
         }
     }
 
+    // Get the current time
     fn get_current_time(&self) -> Instant {
         Instant::now()
     }

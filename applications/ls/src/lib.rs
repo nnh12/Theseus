@@ -74,8 +74,6 @@ fn print_children(dir: &DirRef) {
       	let size = FileOrDir:: get_file_size(&child_path);
         let time = FileOrDir:: get_current_time(&child_path);
         writeln!(child_string, "{} ({} bytes, {:?})", child, size, time).expect("Failed to write child_string");
-        // writeln!(child_string, "{} ({} bytes)", child, size).expect("Failed to write child_string");
-	//  writeln!(child_string, "{child}").expect("Failed to write child_string");
     }
     println!("{}", child_string);
 }
