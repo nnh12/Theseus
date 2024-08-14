@@ -16,6 +16,8 @@ use fs_node::{FileOrDir, DirRef};
 use getopts::Options;
 use path::Path;
 
+// const THIRD_ARG_INDEX: usize = 3;
+
 pub fn main(args: Vec<String>) -> isize {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help menu");
@@ -35,12 +37,14 @@ pub fn main(args: Vec<String>) -> isize {
         return 0;
     }
 
+    let size_option = matches.opt_present("s");
+
     let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
         println!("failed to get current task");
         return -1;
     };
 
-    if matches.opt_present("s") {
+    if size_option && matches.free.is_empty() {
         print_children(&curr_wd, true);
         return 0;
     }
@@ -56,7 +60,12 @@ pub fn main(args: Vec<String>) -> isize {
     // Navigate to the path specified by first argument
     match path.get(&curr_wd) {
         Some(FileOrDir::Dir(dir)) => {
-            print_children(&dir, false);
+            if size_option {
+                print_children(&dir, true);
+            }
+            else {
+                print_children(&dir, false);
+            }
             0
         }
         Some(FileOrDir::File(file)) => {
