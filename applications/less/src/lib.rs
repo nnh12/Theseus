@@ -4,40 +4,40 @@
 // FIXME
 
 extern crate alloc;
-// extern crate task;
-// extern crate getopts;
-// extern crate path;
-// extern crate fs_node;
-// extern crate keycodes_ascii;
-// extern crate libterm;
-// extern crate spin;
-// extern crate app_io;
-// extern crate stdio;
-// extern crate core2;
-// #[macro_use] extern crate log;
+extern crate task;
+extern crate getopts;
+extern crate path;
+extern crate fs_node;
+extern crate keycodes_ascii;
+extern crate libterm;
+extern crate spin;
+extern crate app_io;
+extern crate stdio;
+extern crate core2;
+#[macro_use] extern crate log;
 
-// use keycodes_ascii::{Keycode, KeyAction};
-// use core::str;
+use keycodes_ascii::{Keycode, KeyAction};
+use core::str;
 use alloc::{
     vec::Vec,
     string::String,
 };
-// use getopts::Options;
-// use path::Path;
-// use fs_node::FileOrDir;
-// use alloc::collections::BTreeMap;
-// use libterm::Terminal;
-// use spin::Mutex;
-// use stdio::{StdioWriter, KeyEventQueueReader};
-// use core2::io::Write;
+use getopts::Options;
+use path::Path;
+use fs_node::FileOrDir;
+use alloc::collections::BTreeMap;
+use libterm::Terminal;
+use spin::Mutex;
+use stdio::{StdioWriter, KeyEventQueueReader};
+use core2::io::Write;
 
-// /// The metadata for each line in the file.
-// struct LineSlice {
-//     /// The starting index in the String for a line. (inclusive)
-//     start: usize,
-//     /// The ending index in the String for a line. (exclusive)
-//     end: usize
-// }
+/// The metadata for each line in the file.
+struct LineSlice {
+    /// The starting index in the String for a line. (inclusive)
+    start: usize,
+    /// The ending index in the String for a line. (exclusive)
+    end: usize
+}
 
 // /// Read the whole file to a String.
 // fn get_content_string(file_path: String) -> Result<String, String> {
