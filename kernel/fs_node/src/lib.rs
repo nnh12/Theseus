@@ -24,14 +24,6 @@ use alloc::sync::{Arc, Weak};
 use memory::MappedPages;
 use io::{ByteReader, ByteWriter, KnownLength};
 
-/// A value to represent the space on the disk (stored in meta-information) for directores
-macro_rules! DIRECTORY_DISK_SPACE {
-    () => {
-        4096
-    };
-}
-
-
 /// A reference to any type that implements the [`File`] trait,
 /// which can only represent a File (not a Directory).
 pub type FileRef = Arc<Mutex<dyn File + Send>>;
@@ -195,17 +187,6 @@ impl FileOrDir {
         match &self {
             FileOrDir::File(_) => false,
             FileOrDir::Dir(_) => true,
-        }
-    }
-
-    /// Returns the size of the file in bytes, or directory disk space.
-    pub fn get_file_size(file_or_dir: &FileOrDir) -> usize {
-        match file_or_dir {
-            FileOrDir::File(file_ref) => {
-                let file = file_ref.lock();
-                file.len()
-            },
-            FileOrDir::Dir(_) => DIRECTORY_DISK_SPACE!(),
         }
     }
 }

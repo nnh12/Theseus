@@ -43,13 +43,13 @@ pub fn main(args: Vec<String>) -> isize {
     };
 
     if size_option && matches.free.is_empty() {
-        print_children(&curr_wd, true);
+        print_children(&curr_wd, size_option);
         return 0;
     }
 
     // print children of working directory if no child is specified
     if matches.free.is_empty() {
-        print_children(&curr_wd, false);
+        print_children(&curr_wd, size_option);
         return 0;
     }
 
@@ -58,12 +58,7 @@ pub fn main(args: Vec<String>) -> isize {
     // Navigate to the path specified by first argument
     match path.get(&curr_wd) {
         Some(FileOrDir::Dir(dir)) => {
-            if size_option {
-                print_children(&dir, true);
-            }
-            else {
-                print_children(&dir, false);
-            }
+            print_children(&dir, size_option);
             0
         }
         Some(FileOrDir::File(file)) => {
@@ -84,8 +79,15 @@ fn print_children(dir: &DirRef, print_size: bool) {
     for child in child_list.iter() {
         let child_path = dir.lock().get(child).expect("Failed to get child path");
         if print_size {
-            let size = FileOrDir::get_file_size(&child_path);
-            writeln!(child_string, "   {}    {}", size, child).expect("Failed to write child_string");
+            match &child_path {
+                FileOrDir::File(file_ref) => {
+                    let file = file_ref.lock();
+                    writeln!(child_string, "   {}    {}", file.len(), child).expect("Failed to write child_string");
+                },
+                FileOrDir::Dir(_) => {
+                    writeln!(child_string, "   --    {}", child).expect("Failed to write child_string");
+                },
+            };
         } else {
             writeln!(child_string, "{}", child).expect("Failed to write child_string");
         }
