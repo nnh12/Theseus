@@ -42,11 +42,6 @@ pub fn main(args: Vec<String>) -> isize {
         return -1;
     };
 
-    if size_option && matches.free.is_empty() {
-        print_children(&curr_wd, size_option);
-        return 0;
-    }
-
     // print children of working directory if no child is specified
     if matches.free.is_empty() {
         print_children(&curr_wd, size_option);
