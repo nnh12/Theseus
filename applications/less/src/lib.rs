@@ -51,7 +51,7 @@ fn get_content_string(file_path: String) -> Result<String, String> {
         Some(file_dir_enum) => { 
             match file_dir_enum {
                 FileOrDir::Dir(directory) => {
-                    println!("{:?} is a directory, cannot 'less' non-files.", directory.lock().get_name()))
+                    println!("{:?} is a directory, cannot 'less' non-files.", directory.lock().get_name());
                 }
                 FileOrDir::File(file) => {
                     let mut file_locked = file.lock();
@@ -61,14 +61,14 @@ fn get_content_string(file_path: String) -> Result<String, String> {
                         Ok(num) => num,
                         Err(e) => {
                             return Err(format!("Failed to read {:?}, error {:?}",
-                                               file_locked.get_name(), e))
+                                               file_locked.get_name(), e));
                         }
                     };
                     let read_string = match str::from_utf8(&string_slice_as_bytes) {
                         Ok(string_slice) => string_slice,
                         Err(utf8_err) => {
                             return Err(format!("File {:?} was not a printable UTF-8 text file: {}",
-                                               file_locked.get_name(), utf8_err))
+                                               file_locked.get_name(), utf8_err));
                         }
                     };
                     Ok(read_string.to_string())
