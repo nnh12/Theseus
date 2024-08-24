@@ -18,6 +18,7 @@ use alloc::{format, sync::Arc};
 use core2::io::{self, Error, ErrorKind, Read, Write};
 use stdio::{StdioReader, StdioWriter};
 use tty::{LineDiscipline, Slave};
+use termion::terminal_size;
 
 pub trait ImmutableRead: Send + Sync + 'static {
     fn read(&self, buf: &mut [u8]) -> io::Result<usize>;
@@ -80,6 +81,20 @@ pub struct IoStreams {
     /// The writer to stderr.
     pub stderr: Arc<dyn ImmutableWrite>,
     pub discipline: Option<Arc<LineDiscipline>>,
+}
+
+/// A structure to represent a terminal with its dimensions.
+pub struct Terminal {
+    width: u16,
+    height: u16,
+}
+
+
+pub impl Terminal {
+   /// Get the width and height of the terminal screen.
+    fn get_text_dimensions(&self) -> (u16, u16) {
+        (self.width, self.height)
+    }
 }
 
 mod shared_maps {
@@ -223,3 +238,5 @@ pub fn print_to_stdout_args(fmt_args: core::fmt::Arguments) {
         // let _ = logger::write_str("\x1b[31m [E] error in print!/println! macro: no stdout queue for current task \x1b[0m\n");
     };
 }
+
+

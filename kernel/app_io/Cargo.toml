@@ -27,5 +27,8 @@ path = "../../kernel/tty"
 features = ["spin_no_std"]
 version = "1.4.0"
 
+[dependencies.termion]
+termion = "1.5.6"
+
 [lib]
 crate-type = ["rlib"]
