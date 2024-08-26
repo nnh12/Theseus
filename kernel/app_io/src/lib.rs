@@ -8,7 +8,6 @@
 //! Applications can access their queues using [`stdin`], [`stdout`], and
 //! [`stderr`]. This crate also has support for line disciplines, which can be
 //! accessed using [`line_discipline`].
-
 #![no_std]
 
 extern crate alloc;
@@ -18,7 +17,7 @@ use alloc::{format, sync::Arc};
 use core2::io::{self, Error, ErrorKind, Read, Write};
 use stdio::{StdioReader, StdioWriter};
 use tty::{LineDiscipline, Slave};
-use termion::terminal_size;
+use crossterm::terminal;
 
 pub trait ImmutableRead: Send + Sync + 'static {
     fn read(&self, buf: &mut [u8]) -> io::Result<usize>;
@@ -83,17 +82,11 @@ pub struct IoStreams {
     pub discipline: Option<Arc<LineDiscipline>>,
 }
 
-/// A structure to represent a terminal with its dimensions.
-pub struct Terminal {
-    width: u16,
-    height: u16,
-}
-
-
-pub impl Terminal {
-   /// Get the width and height of the terminal screen.
-    fn get_text_dimensions(&self) -> (u16, u16) {
-        (self.width, self.height)
+fn get_terminal_size() -> (u16, u16) {
+    // Get the terminal size (columns, rows)
+    match terminal::size() {
+        Ok((cols, rows)) => (cols, rows),
+        Err(_) => (80, 24), // Default size if terminal size cannot be determined
     }
 }
 
