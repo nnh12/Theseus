@@ -33,7 +33,6 @@ pub fn main(args: Vec<String>) -> isize {
         println!("failed to get current task");
         return -1;
     };
-    
     // Obtains copy of working directory for reference
     let working_dir = Arc::clone(&curr_env.lock().working_dir);
     
