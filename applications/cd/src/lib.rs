@@ -17,6 +17,7 @@ use getopts::Options;
 pub fn main(args: Vec<String>) -> isize {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help menu");
+    opts.optflag("p", "parent", "change parent directory");
 
     let matches = match opts.parse(args) {
         Ok(m) => m,
@@ -27,16 +28,32 @@ pub fn main(args: Vec<String>) -> isize {
         }
     };
 
+    let parent_opt = matches.opt_present("p");
+
     let Ok(curr_env) = task::with_current_task(|t| t.get_env()) else {
         println!("failed to get current task");
         return -1;
     };
 
+    let working_dir = Arc::clone(&curr_env.lock().working_dir);
     // go to root directory
     if matches.free.is_empty() {
+        println!("empty");
         curr_env.lock().working_dir = Arc::clone(root::get_root());
     } else {
         let path = matches.free[0].as_ref();
+        
+        if parent_opt {
+            println!("Parent");
+            if let Some(parent_dir) = working_dir.lock().get_parent_dir() {
+                curr_env.lock().working_dir = Arc::clone(&parent_dir);
+            } else {
+                println!("already at the root directory");
+                return -1;
+            }
+        }
+
+        else {
         match curr_env.lock().chdir(path) {
             Err(environment::Error::NotADirectory) => {
                 println!("not a directory: {}", path);
@@ -47,6 +64,7 @@ pub fn main(args: Vec<String>) -> isize {
                 return -1;
             }
             _ => {}
+        }
         }
     }
     0
