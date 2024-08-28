@@ -18,7 +18,7 @@ use path::Path;
 pub fn main(args: Vec<String>) -> isize {
     let mut opts = Options::new();
     opts.optflag("h", "help", "print this help menu");
-    opts.optflag("p", "parent", "change parent directory");
+    opts.optflag("p", "parent", "use '..' to change to parent directory");
 
     let matches = match opts.parse(args) {
         Ok(m) => m,
