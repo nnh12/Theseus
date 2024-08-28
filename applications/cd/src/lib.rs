@@ -13,6 +13,7 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use getopts::Options;
+use path::Path;
 
 pub fn main(args: Vec<String>) -> isize {
     let mut opts = Options::new();
@@ -28,14 +29,14 @@ pub fn main(args: Vec<String>) -> isize {
         }
     };
 
-    let parent_opt = matches.opt_present("p");
-
     let Ok(curr_env) = task::with_current_task(|t| t.get_env()) else {
         println!("failed to get current task");
         return -1;
     };
-
+    
+    // Obtains copy of working directory for reference
     let working_dir = Arc::clone(&curr_env.lock().working_dir);
+    
     // go to root directory
     if matches.free.is_empty() {
         println!("empty");
@@ -43,28 +44,27 @@ pub fn main(args: Vec<String>) -> isize {
     } else {
         let path = matches.free[0].as_ref();
         
-        if parent_opt {
-            println!("Parent");
+        if path == Path::new("..") {
             if let Some(parent_dir) = working_dir.lock().get_parent_dir() {
                 curr_env.lock().working_dir = Arc::clone(&parent_dir);
             } else {
-                println!("already at the root directory");
+                println!("failed to get parent directory");
                 return -1;
             }
         }
 
         else {
-        match curr_env.lock().chdir(path) {
-            Err(environment::Error::NotADirectory) => {
-                println!("not a directory: {}", path);
-                return -1;
+            match curr_env.lock().chdir(path) {
+                Err(environment::Error::NotADirectory) => {
+                    println!("not a directory: {}", path);
+                    return -1;
+                }
+                Err(environment::Error::NotFound) => {
+                    println!("couldn't find directory: {}", path);
+                    return -1;
+                }
+                _ => {}
             }
-            Err(environment::Error::NotFound) => {
-                println!("couldn't find directory: {}", path);
-                return -1;
-            }
-            _ => {}
-        }
         }
     }
     0
