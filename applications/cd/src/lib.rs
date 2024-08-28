@@ -39,7 +39,6 @@ pub fn main(args: Vec<String>) -> isize {
     
     // go to root directory
     if matches.free.is_empty() {
-        println!("empty");
         curr_env.lock().working_dir = Arc::clone(root::get_root());
     } else {
         let path = matches.free[0].as_ref();
