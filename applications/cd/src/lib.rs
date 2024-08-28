@@ -43,7 +43,6 @@ pub fn main(args: Vec<String>) -> isize {
         curr_env.lock().working_dir = Arc::clone(root::get_root());
     } else {
         let path = matches.free[0].as_ref();
-        
         if path == Path::new("..") {
             if let Some(parent_dir) = working_dir.lock().get_parent_dir() {
                 curr_env.lock().working_dir = Arc::clone(&parent_dir);
