@@ -41,28 +41,18 @@ pub fn main(args: Vec<String>) -> isize {
         curr_env.lock().working_dir = Arc::clone(root::get_root());
     } else {
         let path = matches.free[0].as_ref();
-        if path == Path::new("..") {
-            if let Some(parent_dir) = working_dir.lock().get_parent_dir() {
-                curr_env.lock().working_dir = Arc::clone(&parent_dir);
-            } else {
-                println!("failed to get parent directory");
+        match curr_env.lock().chdir(path) {
+            Err(environment::Error::NotADirectory) => {
+                println!("not a directory: {}", path);
                 return -1;
             }
-        }
-
-        else {
-            match curr_env.lock().chdir(path) {
-                Err(environment::Error::NotADirectory) => {
-                    println!("not a directory: {}", path);
-                    return -1;
-                }
-                Err(environment::Error::NotFound) => {
-                    println!("couldn't find directory: {}", path);
-                    return -1;
-                }
-                _ => {}
+            Err(environment::Error::NotFound) => {
+                println!("couldn't find directory: {}", path);
+                return -1;
             }
+            _ => {}
         }
+        
     }
     0
 }
