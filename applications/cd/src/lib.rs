@@ -31,7 +31,7 @@ pub fn main(args: Vec<String>) -> isize {
         println!("failed to get current task");
         return -1;
     };
-    
+
     // go to root directory
     if matches.free.is_empty() {
         curr_env.lock().working_dir = Arc::clone(root::get_root());
