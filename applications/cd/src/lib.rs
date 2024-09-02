@@ -13,7 +13,6 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use getopts::Options;
-use path::Path;
 
 pub fn main(args: Vec<String>) -> isize {
     let mut opts = Options::new();
@@ -33,8 +32,6 @@ pub fn main(args: Vec<String>) -> isize {
         println!("failed to get current task");
         return -1;
     };
-    // Obtains copy of working directory for reference
-    let working_dir = Arc::clone(&curr_env.lock().working_dir);
     
     // go to root directory
     if matches.free.is_empty() {
