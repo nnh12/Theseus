@@ -47,7 +47,7 @@ pub fn main(args: Vec<String>) -> isize {
                 return -1;
             }
             _ => {}
-        } 
+        }
     }
     0
 }
