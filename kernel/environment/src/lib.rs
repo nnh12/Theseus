@@ -44,6 +44,19 @@ impl Environment {
         Ok(())
     }
 
+    pub fn chdir_path(&mut self, path: &Path) -> Result<()> {
+        match path.get(&self.working_dir) {
+            Some(FileOrDir::Dir(dir)) => {
+                self.working_dir = dir;
+                Ok(())
+            }
+            Some(FileOrDir::File(_)) => Err(Error::NotADirectory),
+            None => Err(Error::NotFound),
+        }
+    }
+
+    
+
     /// Returns the value of the environment variable with the given `key`.
     #[doc(alias("var"))]
     pub fn get(&self, key: &str) -> Option<&String> {
