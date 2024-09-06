@@ -31,36 +31,17 @@ impl Environment {
     /// Changes the current working directory.
     #[doc(alias("change"))]
     pub fn chdir(&mut self, path: &Path) -> Result<()> {
-        if path == Path::new("..") {
-            // Obtain the parent directory in a separate step
-            let parent_dir = {
-                let working_dir_lock = self.working_dir.lock();
-                working_dir_lock.get_parent_dir()
-            };
-    
-            match parent_dir {
-                Some(parent_dir) => {
-                    // Now safely update `self.working_dir` outside of the lock
-                    self.working_dir = Arc::clone(&parent_dir);
+        for component in path.components() {
+            let new = self.working_dir.lock().get(component.as_ref());
+            match new {
+                Some(FileOrDir::Dir(dir)) => {
+                    self.working_dir = dir;
                 }
-                None => return Err(Error::NotFound), // Or another suitable error
+                Some(FileOrDir::File(_)) => return Err(Error::NotADirectory),
+                None => return Err(Error::NotFound),
             }
-            Ok(())
         }
-
-        else {
-            for component in path.components() {
-                let new = self.working_dir.lock().get(component.as_ref());
-                match new {
-                    Some(FileOrDir::Dir(dir)) => {
-                        self.working_dir = dir;
-                    }
-                    Some(FileOrDir::File(_)) => return Err(Error::NotADirectory),
-                    None => return Err(Error::NotFound),
-                }
-            }
-            Ok(())
-        }
+        Ok(())
     }
 
     pub fn chdir_path(&mut self, path: &Path) -> Result<()> {
