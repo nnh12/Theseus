@@ -37,7 +37,8 @@ pub fn main(args: Vec<String>) -> isize {
         curr_env.lock().working_dir = Arc::clone(root::get_root());
     } else {
         let path = matches.free[0].as_ref();
-        match curr_env.lock().chdir(path) {
+        
+        match curr_env.lock().chdir_path(path) {
             Err(environment::Error::NotADirectory) => {
                 println!("not a directory: {}", path);
                 return -1;
