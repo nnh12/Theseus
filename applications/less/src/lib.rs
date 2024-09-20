@@ -1,27 +1,32 @@
 //! A text file reader which allows the user using `Up` and `Down` to scroll the screen.
 #![no_std]
 
-// FIXME
-
 extern crate alloc;
-// extern crate task;
-// extern crate getopts;
-// extern crate path;
-// extern crate fs_node;
-// extern crate keycodes_ascii;
-// extern crate libterm;
-// extern crate spin;
-// extern crate app_io;
-// extern crate stdio;
-// extern crate core2;
-// #[macro_use] extern crate log;
+extern crate task;
+extern crate getopts;
+extern crate path;
+extern crate fs_node;
+extern crate keycodes_ascii;
+extern crate libterm;
+extern crate spin;
+extern crate app_io;
+extern crate stdio;
+extern crate core2;
+#[macro_use] extern crate log;
+
+use fs_node::{FileOrDir};
+use path::Path;
+use app_io::println;
 
 // use keycodes_ascii::{Keycode, KeyAction};
 // use core::str;
-use alloc::{
-    vec::Vec,
-    string::String,
-};
+use alloc::vec;
+use vec::Vec;
+use alloc::string::String;
+use alloc::string::ToString;
+//    vec::Vec,
+//    string::String,
+//};
 // use getopts::Options;
 // use path::Path;
 // use fs_node::FileOrDir;
@@ -39,47 +44,48 @@ use alloc::{
 //     end: usize
 // }
 
+
 // /// Read the whole file to a String.
-// fn get_content_string(file_path: String) -> Result<String, String> {
-//     let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
-//         return Err("failed to get current task".to_string());
-//     };
-//     let path = Path::new(file_path);
+fn get_content_string(file_path: String) -> Result<String, String> {
+    let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
+        return Err("failed to get current task".to_string());
+    };
+    let path = Path::new(file_path);
     
-//     // navigate to the filepath specified by first argument
-//     match path.get(&curr_wd) {
-//         Some(file_dir_enum) => { 
-//             match file_dir_enum {
-//                 FileOrDir::Dir(directory) => {
-//                     Err(format!("{:?} is a directory, cannot 'less' non-files.", directory.lock().get_name()))
-//                 }
-//                 FileOrDir::File(file) => {
-//                     let mut file_locked = file.lock();
-//                     let file_size = file_locked.len();
-//                     let mut string_slice_as_bytes = vec![0; file_size];
-//                     let _num_bytes_read = match file_locked.read_at(&mut string_slice_as_bytes, 0) {
-//                         Ok(num) => num,
-//                         Err(e) => {
-//                             return Err(format!("Failed to read {:?}, error {:?}",
-//                                                file_locked.get_name(), e))
-//                         }
-//                     };
-//                     let read_string = match str::from_utf8(&string_slice_as_bytes) {
-//                         Ok(string_slice) => string_slice,
-//                         Err(utf8_err) => {
-//                             return Err(format!("File {:?} was not a printable UTF-8 text file: {}",
-//                                                file_locked.get_name(), utf8_err))
-//                         }
-//                     };
-//                     Ok(read_string.to_string())
-//                 }
-//             }
-//         },
-//         _ => {
-//             Err(format!("Couldn't find file at path {}", path))
-//         }
-//     }
-// }
+    // navigate to the filepath specified by first argument
+    match path.get(&curr_wd) {
+        Some(file_dir_enum) => { 
+            match file_dir_enum {
+                FileOrDir::Dir(directory) => {
+                    println!("{:?} is a directory, cannot 'less' non-files.", directory.lock().get_name())
+                }
+                FileOrDir::File(file) => {
+                    let mut file_locked = file.lock();
+                    let file_size = file_locked.len();
+                    let mut string_slice_as_bytes = vec![0; file_size];
+                    let _num_bytes_read = match file_locked.read_at(&mut string_slice_as_bytes, 0) {
+                        Ok(num) => num,
+                        //Err(e) => {
+                        //    println!("Failed to read {:?}, error {:?}",
+                        //                       file_locked.get_name(), e)
+                        //}
+                    };
+                    let read_string = match str::from_utf8(&string_slice_as_bytes) {
+                        Ok(string_slice) => string_slice,
+                        //Err(utf8_err) => {
+                        //    println!("File {:?} was not a printable UTF-8 text file: {}",
+                        //                       file_locked.get_name(), utf8_err)
+                        //}
+                    };
+                    Ok(read_string.to_string())
+                }
+            }
+        },
+        _ => {
+            println!("Couldn't find file at path {}", path)
+        }
+    }
+}
 
 // /// This function parses the text file. It scans through the whole file and records the string slice
 // /// for each line. This function has full UTF-8 support, which means that the case where a single character
