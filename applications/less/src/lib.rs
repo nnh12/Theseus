@@ -12,18 +12,22 @@ extern crate spin;
 extern crate app_io;
 extern crate stdio;
 extern crate core2;
-#[macro_use] extern crate log;
+//#[macro_use] extern crate log;
 
 use fs_node::{FileOrDir};
 use path::Path;
-use app_io::println;
+//use app_io::println;
 
 // use keycodes_ascii::{Keycode, KeyAction};
-// use core::str;
+use core::str;
+use alloc::{
+    string::String,
+    vec::Vec,
+};
 use alloc::vec;
-use vec::Vec;
-use alloc::string::String;
+use alloc::format;
 use alloc::string::ToString;
+use app_io::println;
 //    vec::Vec,
 //    string::String,
 //};
@@ -50,14 +54,15 @@ fn get_content_string(file_path: String) -> Result<String, String> {
     let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
         return Err("failed to get current task".to_string());
     };
-    let path = Path::new(file_path);
+    let path = Path::new(file_path.as_str());
     
     // navigate to the filepath specified by first argument
     match path.get(&curr_wd) {
-        Some(file_dir_enum) => { 
+
+        Some(file_dir_enum) => {
             match file_dir_enum {
                 FileOrDir::Dir(directory) => {
-                    println!("{:?} is a directory, cannot 'less' non-files.", directory.lock().get_name())
+                    Err(format!("Is a directory, cannot 'less' non-files."))
                 }
                 FileOrDir::File(file) => {
                     let mut file_locked = file.lock();
@@ -65,25 +70,30 @@ fn get_content_string(file_path: String) -> Result<String, String> {
                     let mut string_slice_as_bytes = vec![0; file_size];
                     let _num_bytes_read = match file_locked.read_at(&mut string_slice_as_bytes, 0) {
                         Ok(num) => num,
-                        //Err(e) => {
-                        //    println!("Failed to read {:?}, error {:?}",
-                        //                       file_locked.get_name(), e)
-                        //}
+                        Err(e) => {
+                            println!("Failed to read error ");
+                            return Err(format!("Failed to file size: {:?}", e));
+                        }
                     };
                     let read_string = match str::from_utf8(&string_slice_as_bytes) {
                         Ok(string_slice) => string_slice,
-                        //Err(utf8_err) => {
-                        //    println!("File {:?} was not a printable UTF-8 text file: {}",
-                        //                       file_locked.get_name(), utf8_err)
-                        //}
+                        Err(utf8_err) => {
+                            println!("File was not a printable UTF-8 text file");
+                            return Err(format!("Failed to read file: {:?}", utf8_err));
+                        }
                     };
                     Ok(read_string.to_string())
                 }
             }
         },
-        _ => {
-            println!("Couldn't find file at path {}", path)
+        None => {
+             // Handle the case where the path wasn't found
+             //         // For example, you could return an error or print a message:
+             Err(format!("Couldn't find file at path"))                     
         }
+        //_ => {
+            //println!("Couldn't find file at path {}", path)
+        //}
     }
 }
 
