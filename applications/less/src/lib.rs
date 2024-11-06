@@ -28,6 +28,7 @@ use alloc::vec;
 use alloc::format;
 use alloc::string::ToString;
 use app_io::println;
+use getopts::Options;
 //    vec::Vec,
 //    string::String,
 //};
@@ -62,7 +63,7 @@ fn get_content_string(file_path: String) -> Result<String, String> {
         Some(file_dir_enum) => {
             match file_dir_enum {
                 FileOrDir::Dir(directory) => {
-                    Err(format!("Is a directory, cannot 'less' non-files."))
+                    Err(format!("{:?} a directory, cannot 'less' non-files.", directory.lock().get_name()))
                 }
                 FileOrDir::File(file) => {
                     let mut file_locked = file.lock();
@@ -216,7 +217,7 @@ fn get_content_string(file_path: String) -> Result<String, String> {
 // }
 
 
-pub fn main(_args: Vec<String>) -> isize {
+pub fn main(args: Vec<String>) -> isize {
 
     // // Get stdout.
     // let stdout = match app_io::stdout() {
@@ -228,52 +229,54 @@ pub fn main(_args: Vec<String>) -> isize {
     // };
 
     // // Set and parse options.
-    // let mut opts = Options::new();
-    // opts.optflag("h", "help", "print this help menu");
-    // let matches = match opts.parse(args) {
-    //     Ok(m) => m,
-    //     Err(e) => {
-    //         error!("{}", e);
-    //         print_usage(opts, stdout);
-    //         return -1;
-    //     }
-    // };
-    // if matches.opt_present("h") {
-    //     print_usage(opts, stdout);
-    //     return 0;
-    // }
-    // if matches.free.is_empty() {
-    //     print_usage(opts, stdout);
-    //     return 0;
-    // }
-    // let filename = matches.free[0].clone();
-
-    // if let Err(e) = run(filename) {
-    //     error!("{}", e);
-    //     return 1;
-    // }
+    let mut opts = Options::new();
+    opts.optflag("h", "help", "print this help menu");
+    let matches = match opts.parse(args) {
+        Ok(m) => m,
+        Err(e) => {
+            //Err(format!("Is a directory, cannot 'less' non-files."))
+            format!("{}", e);
+            //print_usage(opts, stdout);
+            return -1;
+        }
+    };
+    if matches.opt_present("h") {
+        //print_usage(opts, stdout);
+        return 0;
+    }
+    if matches.free.is_empty() {
+        //print_usage(opts, stdout);
+        return 0;
+    }
+    let filename = matches.free[0].clone();
+    
+    let _content = get_content_string(filename);
+    
+    //if let Err(e) = run(filename) {
+    //    error!("{}", e);
+    //    return 1;
+    //}
     0
 }
 
-// fn run(filename: String) -> Result<(), String> {
+//fn run(filename: String) -> Result<(), String> {
 
-//     // Acquire key event queue.
+     // Acquire key event queue.
 //     let key_event_queue = app_io::take_key_event_queue()?;
 //     let key_event_queue = (*key_event_queue).as_ref()
 //                           .ok_or("failed to take key event reader")?;
 
-//     // Read the whole file to a String.
+     // Read the whole file to a String.
 //     let content = get_content_string(filename)?;
 
 //     // Get it run.
 //     let map = parse_content(&content)?;
-
 //     Ok(event_handler_loop(&content, &map, key_event_queue)?)
-// }
+//}
 
-// fn print_usage(opts: Options, stdout: StdioWriter) {
-//     let _ = stdout.lock().write_all(format!("{}\n", opts.usage(USAGE)).as_bytes());
-// }
+//fn print_usage(opts: Options, stdout: StdioWriter) {
+//    let _ = stdout.lock().write_all(format!("{}\n", opts.usage(USAGE)).as_bytes());
+//}
 
-// const USAGE: &'static str = "Usage: less file
-// read files";
+//const USAGE: &'static str = "Usage: less file
+//read files";
