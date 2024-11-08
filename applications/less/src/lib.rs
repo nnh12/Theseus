@@ -12,6 +12,7 @@ extern crate spin;
 extern crate app_io;
 extern crate stdio;
 extern crate core2;
+extern crate terminal_size;
 //#[macro_use] extern crate log;
 
 use fs_node::{FileOrDir};
@@ -29,23 +30,30 @@ use alloc::format;
 use alloc::string::ToString;
 use app_io::println;
 use getopts::Options;
+use terminal_size::{terminal_size, Width, Height};
 // use getopts::Options;
 // use path::Path;
 // use fs_node::FileOrDir;
-// use alloc::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 // use libterm::Terminal;
 // use spin::Mutex;
 // use stdio::{StdioWriter, KeyEventQueueReader};
 // use core2::io::Write;
 
-// /// The metadata for each line in the file.
-// struct LineSlice {
-//     /// The starting index in the String for a line. (inclusive)
-//     start: usize,
-//     /// The ending index in the String for a line. (exclusive)
-//     end: usize
-// }
+// The metadata for each line in the file.
+struct LineSlice {
+  // The starting index in the String for a line. (inclusive)
+  start: usize,
+  // The ending index in the String for a line. (exclusive)
+  end: usize
+}
 
+fn get_terminal_dimensions() -> Option<(usize, usize)> {
+    match terminal_size() {
+        Some((Width(width), Height(height))) => Some((width as usize, height as usize)),
+        None => None,  // If terminal size could not be determined
+    }
+}
 
 // /// Read the whole file to a String.
 fn get_content_string(file_path: String) -> Result<String, String> {
@@ -100,15 +108,15 @@ fn get_content_string(file_path: String) -> Result<String, String> {
 // /// for each line. This function has full UTF-8 support, which means that the case where a single character
 // /// occupies multiple bytes are well considered. The slice index returned by this function is guaranteed
 // /// not to cause panic.
-// fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'static str> {
-//     // Get the width and height of the terminal screen.
-//     let (width, _height) = app_io::get_my_terminal().ok_or("couldn't get terminal for `less` app")?
-//         .lock()
-//         .get_text_dimensions();
+fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'static str> {
+     // Get the width and height of the terminal screen.
+     let (width, _height) = get_terminal_dimensions()
+                 .ok_or("couldn't get terminal dimensions")?;
 
-//     // Record the slice index of each line.
-//     let mut map: BTreeMap<usize, LineSlice> = BTreeMap::new();
-//     // Number of the current line.
+     println!("{} {}", width, _height);
+     // Record the slice index of each line.
+     let mut map: BTreeMap<usize, LineSlice> = BTreeMap::new();
+     // Number of the current line.
 //     let mut cur_line_num: usize = 0;
 //     // Number of characters in the current line.
 //     let mut char_num_in_line: usize = 0;
@@ -133,8 +141,8 @@ fn get_content_string(file_path: String) -> Result<String, String> {
 //     }
 //     map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: content.len() });
 
-//     Ok(map)
-// }
+     Ok(map)
+}
 
 // /// Display part of the file (may be whole file if the file is short) to the terminal, starting
 // /// at line number `line_start`.
@@ -248,8 +256,18 @@ pub fn main(args: Vec<String>) -> isize {
     }
     let filename = matches.free[0].clone();
     
-    let _content = get_content_string(filename);
+    let content = get_content_string(filename);
     
+    match content {
+        Ok(content) => {
+            parse_content(&content); // Now `content` is a `String`, and `&content` is a `&String`
+        },
+        Err(e) => {
+            // Handle the error (e.g.,)
+            println!("Error: {}", e);
+        }
+    }
+
     //if let Err(e) = run(filename) {
     //    error!("{}", e);
     //    return 1;
