@@ -29,9 +29,6 @@ use alloc::format;
 use alloc::string::ToString;
 use app_io::println;
 use getopts::Options;
-//    vec::Vec,
-//    string::String,
-//};
 // use getopts::Options;
 // use path::Path;
 // use fs_node::FileOrDir;
@@ -83,6 +80,7 @@ fn get_content_string(file_path: String) -> Result<String, String> {
                             return Err(format!("Failed to read file: {:?}", utf8_err));
                         }
                     };
+                    println!("{}", read_string);
                     Ok(read_string.to_string())
                 }
             }
