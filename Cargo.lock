@@ -1779,6 +1779,8 @@ dependencies = [
  "spin 0.9.4",
  "stdio",
  "task",
+ "text_display",
+ "window",
 ]
 
 [[package]]
