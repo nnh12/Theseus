@@ -12,7 +12,9 @@ extern crate spin;
 extern crate app_io;
 extern crate stdio;
 extern crate core2;
-extern crate terminal_size;
+//extern crate terminal_size;
+//extern crate text_display;
+
 //#[macro_use] extern crate log;
 
 use fs_node::{FileOrDir};
@@ -30,12 +32,17 @@ use alloc::format;
 use alloc::string::ToString;
 use app_io::println;
 use getopts::Options;
-use terminal_size::{terminal_size, Width, Height};
+//use terminal_size::{terminal_size, Width, Height};
 // use getopts::Options;
 // use path::Path;
 // use fs_node::FileOrDir;
 use alloc::collections::BTreeMap;
-// use libterm::Terminal;
+use libterm::Terminal;
+//use window::Window;
+//use text_display::TextDisplay;
+//use libterm::cursor::Cursor;
+use alloc::sync::Arc;
+use spin::Mutex;
 // use spin::Mutex;
 // use stdio::{StdioWriter, KeyEventQueueReader};
 // use core2::io::Write;
@@ -48,12 +55,12 @@ struct LineSlice {
   end: usize
 }
 
-fn get_terminal_dimensions() -> Option<(usize, usize)> {
-    match terminal_size() {
-        Some((Width(width), Height(height))) => Some((width as usize, height as usize)),
-        None => None,  // If terminal size could not be determined
-    }
-}
+//fn get_terminal_dimensions() -> Option<(usize, usize)> {
+//    match terminal_size() {
+//        Some((Width(width), Height(height))) => Some((width as usize, height as usize)),
+//        None => None,  // If terminal size could not be determined
+//    }
+//}
 
 // /// Read the whole file to a String.
 fn get_content_string(file_path: String) -> Result<String, String> {
@@ -88,7 +95,7 @@ fn get_content_string(file_path: String) -> Result<String, String> {
                             return Err(format!("Failed to read file: {:?}", utf8_err));
                         }
                     };
-                    println!("{}", read_string);
+                    //println!("{}", read_string);
                     Ok(read_string.to_string())
                 }
             }
@@ -110,8 +117,18 @@ fn get_content_string(file_path: String) -> Result<String, String> {
 // /// not to cause panic.
 fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'static str> {
      // Get the width and height of the terminal screen.
-     let (width, _height) = get_terminal_dimensions()
-                 .ok_or("couldn't get terminal dimensions")?;
+     //let (width, _height) = get_terminal_dimensions()
+     //            .ok_or("couldn't get terminal dimensions")?;
+     let terminal = match Terminal::new() {
+         Ok(term) => Arc::new(Mutex::new(term)),
+         Err(e) => {
+             return Err(e);
+             //println!("Failed to initialize terminal: {}", e);
+         }
+     };
+
+     let (width, _height) = terminal.lock().get_text_dimensions();
+     
 
      println!("{} {}", width, _height);
      // Record the slice index of each line.
@@ -260,7 +277,7 @@ pub fn main(args: Vec<String>) -> isize {
     
     match content {
         Ok(content) => {
-            parse_content(&content); // Now `content` is a `String`, and `&content` is a `&String`
+            let map = parse_content(&content); // Now `content` is a `String`, and `&content` is a `&String`
         },
         Err(e) => {
             // Handle the error (e.g.,)
