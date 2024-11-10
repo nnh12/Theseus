@@ -43,7 +43,9 @@ use libterm::Terminal;
 //use libterm::cursor::Cursor;
 use alloc::sync::Arc;
 use spin::Mutex;
-// use spin::Mutex;
+use stdio::KeyEventQueueReader;
+use keycodes_ascii::Keycode;
+use keycodes_ascii::KeyAction;
 // use stdio::{StdioWriter, KeyEventQueueReader};
 // use core2::io::Write;
 
@@ -163,7 +165,8 @@ fn display_content(content: &String, map: &BTreeMap<usize, LineSlice>,
                     -> Result<(), &'static str> {
      // Get exclusive control of the terminal. It is locked through the whole function to
      // avoid the overhead of locking it multiple times.
-     let mut locked_terminal = terminal.lock();
+     let locked_terminal = Terminal::new().expect("Failed to create terminal");
+     // let mut locked_terminal = terminal.lock();
 
      // Calculate the last line to display. Make sure we don't extend over the end of the file.
      let (_width, height) = locked_terminal.get_text_dimensions();
@@ -189,50 +192,50 @@ fn display_content(content: &String, map: &BTreeMap<usize, LineSlice>,
 }
 
 // /// Handle user keyboard strikes and perform corresponding operations.
-// fn event_handler_loop(content: &String, map: &BTreeMap<usize, LineSlice>,
-//                       key_event_queue: &KeyEventQueueReader)
-//                       -> Result<(), &'static str> {
+fn event_handler_loop(content: &String, map: &BTreeMap<usize, LineSlice>,
+                       key_event_queue: &KeyEventQueueReader)
+                       -> Result<(), &'static str> {
+     // Get a reference to this task's terminal. The terminal is *not* locked here.
+     //let terminal = app_io::get_my_terminal().ok_or("couldn't get terminal for `less` app")?;
+     let terminal = Terminal::new().expect("Failed to create terminal");
 
-//     // Get a reference to this task's terminal. The terminal is *not* locked here.
-//     let terminal = app_io::get_my_terminal().ok_or("couldn't get terminal for `less` app")?;
+     // Display the beginning of the file.
+     let mut line_start: usize = 0;
+     display_content(content, map, 0, &terminal)?;
 
-//     // Display the beginning of the file.
-//     let mut line_start: usize = 0;
-//     display_content(content, map, 0, &terminal)?;
-
-//     // Handle user keyboard strikes.
-//     loop {
-//         match key_event_queue.read_one() {
-//             Some(keyevent) => {
-//                 if keyevent.action != KeyAction::Pressed { continue; }
-//                 match keyevent.keycode {
-//                     // Quit the program on "Q".
-//                     Keycode::Q => {
-//                         let mut locked_terminal = terminal.lock();
-//                         locked_terminal.clear();
-//                         return locked_terminal.refresh_display()
-//                     },
-//                     // Scroll down a line on "Down".
-//                     Keycode::Down => {
-//                         if line_start + 1 < map.len() {
-//                             line_start += 1;
-//                         }
-//                         display_content(content, map, line_start, &terminal)?;
-//                     },
-//                     // Scroll up a line on "Up".
-//                     Keycode::Up => {
-//                         if line_start > 0 {
-//                             line_start -= 1;
-//                         }
-//                         display_content(content, map, line_start, &terminal)?;
-//                     }
-//                     _ => {}
-//                 }
-//             },
-//             _ => {}
-//         }
-//     }
-// }
+     // Handle user keyboard strikes.
+     loop {
+         match key_event_queue.read_one() {
+             Some(keyevent) => {
+                 if keyevent.action != KeyAction::Pressed { continue; }
+                 match keyevent.keycode {
+                     // Quit the program on "Q".
+                     Keycode::Q => {
+                         let mut locked_terminal = terminal.lock();
+                         locked_terminal.clear();
+                         return locked_terminal.refresh_display()
+                     },
+                     // Scroll down a line on "Down".
+                     Keycode::Down => {
+                         if line_start + 1 < map.len() {
+                             line_start += 1;
+                         }
+                         display_content(content, map, line_start, &terminal)?;
+                     },
+                     // Scroll up a line on "Up".
+                     Keycode::Up => {
+                         if line_start > 0 {
+                             line_start -= 1;
+                         }
+                         display_content(content, map, line_start, &terminal)?;
+                     }
+                     _ => {}
+                 }
+             },
+             _ => {}
+         }
+     }
+}
 
 
 pub fn main(args: Vec<String>) -> isize {
@@ -241,7 +244,7 @@ pub fn main(args: Vec<String>) -> isize {
     let stdout = match app_io::stdout() {
          Ok(stdout) => stdout,
          Err(e) => {
-             error!("{}", e);
+             println!("{}", e);
              return 1;
          }
     };
