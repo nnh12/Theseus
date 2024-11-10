@@ -118,19 +118,13 @@ fn get_content_string(file_path: String) -> Result<String, String> {
 fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'static str> {
      // Get the width and height of the terminal screen.
      //let (width, _height) = get_terminal_dimensions()
-     //            .ok_or("couldn't get terminal dimensions")?;
-     let terminal = match Terminal::new() {
-         Ok(term) => Arc::new(Mutex::new(term)),
-         Err(e) => {
-             return Err(e);
-             //println!("Failed to initialize terminal: {}", e);
-         }
-     };
+     //            .ok_or("couldn't get terminal dimensions")?;e
 
-     let (width, _height) = terminal.lock().get_text_dimensions();
-     
+     // let (width, _height) = terminal.lock().get_text_dimensions();
+     let mut terminal = Terminal::new().expect("Failed to create terminal");
+     let (width, height) = terminal.get_text_dimensions();
 
-     println!("{} {}", width, _height);
+     // println!("{} {}", width, _height);
      // Record the slice index of each line.
      let mut map: BTreeMap<usize, LineSlice> = BTreeMap::new();
      // Number of the current line.
@@ -284,6 +278,8 @@ pub fn main(args: Vec<String>) -> isize {
             println!("Error: {}", e);
         }
     }
+
+    let mut terminal = Terminal::new().expect("Failed to create terminal");
 
     //if let Err(e) = run(filename) {
     //    error!("{}", e);
