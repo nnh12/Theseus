@@ -123,6 +123,7 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
      // let (width, _height) = terminal.lock().get_text_dimensions();
      let mut terminal = Terminal::new().expect("Failed to create terminal");
      let (width, height) = terminal.get_text_dimensions();
+     println!("{} {}", width, height);
 
      // println!("{} {}", width, _height);
      // Record the slice index of each line.
@@ -278,8 +279,6 @@ pub fn main(args: Vec<String>) -> isize {
             println!("Error: {}", e);
         }
     }
-
-    let mut terminal = Terminal::new().expect("Failed to create terminal");
 
     //if let Err(e) = run(filename) {
     //    error!("{}", e);
