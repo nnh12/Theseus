@@ -129,64 +129,64 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
      // Record the slice index of each line.
      let mut map: BTreeMap<usize, LineSlice> = BTreeMap::new();
      // Number of the current line.
-//     let mut cur_line_num: usize = 0;
-//     // Number of characters in the current line.
-//     let mut char_num_in_line: usize = 0;
-//     // Starting index in the String of the current line.
-//     let mut line_start_idx: usize = 0;
-//     // The previous character during the iteration. Set '\0' as the initial value since we don't expect
-//     // to encounter this character in the beginning of the file.
-//     let mut previous_char: char = '\0';
+     let mut cur_line_num: usize = 0;
+     // Number of characters in the current line.
+     let mut char_num_in_line: usize = 0;
+     // Starting index in the String of the current line.
+     let mut line_start_idx: usize = 0;
+     // The previous character during the iteration. Set '\0' as the initial value since we don't expect
+     // to encounter this character in the beginning of the file.
+     let mut previous_char: char = '\0';
 
-//     // Iterate through the whole file.
-//     // `c` is the current character. `str_idx` is the index of the first byte of the current character.
-//     for (str_idx, c) in content.char_indices() {
-//         // When we need to begin a new line, record the previous line in the map.
-//         if char_num_in_line == width || previous_char == '\n' {
-//             map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: str_idx });
-//             char_num_in_line = 0;
-//             line_start_idx = str_idx;
-//             cur_line_num += 1;
-//         }
-//         char_num_in_line += 1;
-//         previous_char = c;
-//     }
-//     map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: content.len() });
+     // Iterate through the whole file.
+     // `c` is the current character. `str_idx` is the index of the first byte of the current character.
+     for (str_idx, c) in content.char_indices() {
+         // When we need to begin a new line, record the previous line in the map.
+         if char_num_in_line == width || previous_char == '\n' {
+             map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: str_idx });
+             char_num_in_line = 0;
+             line_start_idx = str_idx;
+             cur_line_num += 1;
+         }
+         char_num_in_line += 1;
+         previous_char = c;
+     }
+     map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: content.len() });
 
      Ok(map)
 }
 
 // /// Display part of the file (may be whole file if the file is short) to the terminal, starting
 // /// at line number `line_start`.
-// fn display_content(content: &String, map: &BTreeMap<usize, LineSlice>,
-//                    line_start: usize, terminal: &Arc<Mutex<Terminal>>)
-//                    -> Result<(), &'static str> {
-//     // Get exclusive control of the terminal. It is locked through the whole function to
-//     // avoid the overhead of locking it multiple times.
-//     let mut locked_terminal = terminal.lock();
+fn display_content(content: &String, map: &BTreeMap<usize, LineSlice>,
+                    line_start: usize, terminal: &Arc<Mutex<Terminal>>)
+                    -> Result<(), &'static str> {
+     // Get exclusive control of the terminal. It is locked through the whole function to
+     // avoid the overhead of locking it multiple times.
+     let mut locked_terminal = terminal.lock();
 
-//     // Calculate the last line to display. Make sure we don't extend over the end of the file.
-//     let (_width, height) = locked_terminal.get_text_dimensions();
-//     let mut line_end: usize = line_start + height;
-//     if line_end > map.len() {
-//         line_end = map.len();
-//     }
+     // Calculate the last line to display. Make sure we don't extend over the end of the file.
+     let (_width, height) = locked_terminal.get_text_dimensions();
+     let mut line_end: usize = line_start + height;
+     if line_end > map.len() {
+         line_end = map.len();
+     }
 
-//     // Refresh the terminal with the lines we've selected.
-//     let start_indices = match map.get(&line_start) {
-//         Some(indices) => indices,
-//         None => return Err("failed to get the byte indices of the first line")
-//     };
-//     let end_indices = match map.get(&(line_end - 1)) {
-//         Some(indices) => indices,
-//         None => return Err("failed to get the byte indices of the last line")
-//     };
-//     locked_terminal.clear();
-//     locked_terminal.print_to_terminal(
-//         content[start_indices.start..end_indices.end].to_string()
-//     );
-//     locked_terminal.refresh_display()
-// }
+     // Refresh the terminal with the lines we've selected.
+     let start_indices = match map.get(&line_start) {
+         Some(indices) => indices,
+         None => return Err("failed to get the byte indices of the first line")
+     };
+     let end_indices = match map.get(&(line_end - 1)) {
+         Some(indices) => indices,
+         None => return Err("failed to get the byte indices of the last line")
+     };
+     locked_terminal.clear();
+     locked_terminal.print_to_terminal(
+         content[start_indices.start..end_indices.end].to_string()
+     );
+     locked_terminal.refresh_display()
+}
 
 // /// Handle user keyboard strikes and perform corresponding operations.
 // fn event_handler_loop(content: &String, map: &BTreeMap<usize, LineSlice>,
@@ -238,13 +238,13 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
 pub fn main(args: Vec<String>) -> isize {
 
     // // Get stdout.
-    // let stdout = match app_io::stdout() {
-    //     Ok(stdout) => stdout,
-    //     Err(e) => {
-    //         error!("{}", e);
-    //         return 1;
-    //     }
-    // };
+    let stdout = match app_io::stdout() {
+         Ok(stdout) => stdout,
+         Err(e) => {
+             error!("{}", e);
+             return 1;
+         }
+    };
 
     // // Set and parse options.
     let mut opts = Options::new();
