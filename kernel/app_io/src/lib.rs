@@ -18,6 +18,8 @@ use alloc::{format, sync::Arc};
 use core2::io::{self, Error, ErrorKind, Read, Write};
 use stdio::{StdioReader, StdioWriter};
 use tty::{LineDiscipline, Slave};
+use sync_block::MutexGuard;
+use hashbrown::HashMap;
 
 pub trait ImmutableRead: Send + Sync + 'static {
     fn read(&self, buf: &mut [u8]) -> io::Result<usize>;
@@ -102,6 +104,10 @@ mod shared_maps {
     pub fn lock_stream_map() -> MutexGuard<'static, HashMap<usize, IoStreams>> {
         APP_IO_STREAMS.lock()
     }
+}
+
+pub fn get_my_terminal() -> MutexGuard<'static, HashMap<usize, IoStreams>> {
+    shared_maps::lock_stream_map()
 }
 
 /// Shells call this function to store queue stdio streams for applications. If
