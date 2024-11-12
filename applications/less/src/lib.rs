@@ -123,6 +123,10 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
      //            .ok_or("couldn't get terminal dimensions")?;e
 
      // let (width, _height) = terminal.lock().get_text_dimensions();
+     //let mut t = app_io::get_my_terminal().
+     //                    get(&task::get_my_current_task_id())
+     //                    .map(|property| property.terminal.clone());
+
      let mut terminal = Terminal::new().expect("Failed to create terminal");
      let (width, height) = terminal.get_text_dimensions();
      println!("{} {}", width, height);
@@ -161,11 +165,11 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
 // /// Display part of the file (may be whole file if the file is short) to the terminal, starting
 // /// at line number `line_start`.
 fn display_content(content: &String, map: &BTreeMap<usize, LineSlice>,
-                    line_start: usize, terminal: &Arc<Mutex<Terminal>>)
+                    line_start: usize, terminal: &Terminal)
                     -> Result<(), &'static str> {
      // Get exclusive control of the terminal. It is locked through the whole function to
      // avoid the overhead of locking it multiple times.
-     let locked_terminal = Terminal::new().expect("Failed to create terminal");
+     let mut locked_terminal = Terminal::new().expect("Failed to create terminal");
      // let mut locked_terminal = terminal.lock();
 
      // Calculate the last line to display. Make sure we don't extend over the end of the file.
@@ -197,7 +201,7 @@ fn event_handler_loop(content: &String, map: &BTreeMap<usize, LineSlice>,
                        -> Result<(), &'static str> {
      // Get a reference to this task's terminal. The terminal is *not* locked here.
      //let terminal = app_io::get_my_terminal().ok_or("couldn't get terminal for `less` app")?;
-     let terminal = Terminal::new().expect("Failed to create terminal");
+     let mut terminal = Terminal::new().expect("Failed to create terminal");
 
      // Display the beginning of the file.
      let mut line_start: usize = 0;
@@ -211,9 +215,9 @@ fn event_handler_loop(content: &String, map: &BTreeMap<usize, LineSlice>,
                  match keyevent.keycode {
                      // Quit the program on "Q".
                      Keycode::Q => {
-                         let mut locked_terminal = terminal.lock();
-                         locked_terminal.clear();
-                         return locked_terminal.refresh_display()
+                         //let mut locked_terminal = terminal.lock();
+                         //locked_terminal.clear();
+                         return terminal.refresh_display()
                      },
                      // Scroll down a line on "Down".
                      Keycode::Down => {
