@@ -49,6 +49,7 @@ use keycodes_ascii::KeyAction;
 // use stdio::{StdioWriter, KeyEventQueueReader};
 // use core2::io::Write;
 
+
 // The metadata for each line in the file.
 struct LineSlice {
   // The starting index in the String for a line. (inclusive)
@@ -286,6 +287,14 @@ pub fn main(args: Vec<String>) -> isize {
             println!("Error: {}", e);
         }
     }
+
+    //let terminal = Arc::new(Mutex::new(Terminal::new().expect("Failed to create terminal")));
+    //let mut locked_terminal = terminal.lock().expect("failed to lock terminal");
+
+    let mut locked_terminal = Terminal::new().expect("Failed to create termina;");
+    let message = "Hello, Theseus!";
+    locked_terminal.print_to_terminal(message.to_string());
+    locked_terminal.refresh_display().unwrap();
 
     //if let Err(e) = run(filename) {
     //    error!("{}", e);

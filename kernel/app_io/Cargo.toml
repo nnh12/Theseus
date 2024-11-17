@@ -17,8 +17,8 @@ path = "../../kernel/task"
 [dependencies.stdio]
 path = "../../libs/stdio"
 
-[dependencies.libterm]
-path = "../../kernel/libterm"
+#[dependencies.libterm]
+#path = "../../kernel/libterm"
 
 [dependencies.sync_block]
 path = "../../kernel/sync_block"
