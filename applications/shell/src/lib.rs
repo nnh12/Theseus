@@ -135,7 +135,7 @@ enum AppErr {
     SpawnErr(String)
 }
 
-struct Shell {
+pub struct Shell {
     /// Variable that stores the task id of any application manually spawned from the terminal
     jobs: BTreeMap<isize, Job>,
     /// Map task number to job number.
@@ -166,13 +166,15 @@ struct Shell {
     /// The terminal's current environment
     env: Arc<Mutex<Environment>>,
     /// the terminal that is bind with the shell instance
-    terminal: Arc<Mutex<Terminal>>
+    terminal: Arc<Mutex<Terminal>>,
+    /// The indicator to show "text editing" mode
+    less: bool
 }
 
 impl Shell {
     /// Create a new shell. Currently the shell will bind to the default terminal instance provided
     /// by the `app_io` crate.
-    fn new() -> Result<Shell, &'static str> {
+    pub fn new() -> Result<Shell, &'static str> {
         // Initialize a dfqueue for the terminal object to handle printing from applications.
         // Note that this is only to support legacy output. Newly developed applications should
         // turn to use `stdio` provided by the `stdio` crate together with the support of `app_io`.
@@ -202,9 +204,51 @@ impl Shell {
             print_consumer,
             print_producer,
             env: Arc::new(Mutex::new(env)),
+            less: false,
             terminal
         })
     }
+
+     pub fn new_editor(s: String) -> Result<Shell, &'static str> {
+        // Initialize a dfqueue for the terminal object to handle printing from applications.
+        // Note that this is only to support legacy output. Newly developed applications should
+        // turn to use `stdio` provided by the `stdio` crate together with the support of `app_io`.
+        let terminal_print_dfq: DFQueue<Event>  = DFQueue::new();
+        let print_consumer = terminal_print_dfq.into_consumer();
+        let print_producer = print_consumer.obtain_producer();
+
+        let key_event_queue: KeyEventQueue = KeyEventQueue::new();
+        let key_event_producer = key_event_queue.get_writer();
+        let key_event_consumer = key_event_queue.get_reader();
+
+        let env = Environment::default();
+
+        let terminal = Arc::new(Mutex::new(Terminal::text_editor(s.clone())?));
+
+        let mut shell = Shell {
+            jobs: BTreeMap::new(),
+            task_to_job: BTreeMap::new(),
+            key_event_consumer: Arc::new(Mutex::new(Some(key_event_consumer))),
+            key_event_producer,
+            fg_job_num: None,
+            cmdline: String::new(),
+            input_buffer: String::new(),
+            command_history: Vec::new(),
+            history_index: 0,
+            buffered_cmd_recorded: false,
+            print_consumer,
+            print_producer,
+            env: Arc::new(Mutex::new(env)),
+            less: true,
+            terminal
+        };
+
+        shell.input_buffer = String::new();
+        shell.key_event_consumer = Arc::new(Mutex::new(None));
+        Ok(shell)
+    }
+
+
 
     /// Insert a character to the command line buffer in the shell.
     /// The position to insert is determined by the position of the cursor in the terminal. 
@@ -259,13 +303,15 @@ impl Shell {
     /// Set the command line to be a specific string.
     /// `sync_terminal` indicates whether the terminal screen will be synchronically updated.
     fn set_cmdline(&mut self, s: String, sync_terminal: bool) -> Result<(), &'static str> {
+        let mut s1 = s.clone();
+        s1.push_str("hello");
         if !self.cmdline.is_empty() {
             self.clear_cmdline(sync_terminal)?;
         }
         self.cmdline = s.clone();
         self.update_cursor_pos(0)?;
         if sync_terminal {
-            self.terminal.lock().print_to_terminal(s);
+            self.terminal.lock().print_to_terminal(s1);
         }
         Ok(())
     }
@@ -1028,6 +1074,7 @@ impl Shell {
                             // so we need to downcast it from Any to isize.
                             let val: Option<&isize> = exit_status.downcast_ref::<isize>();
                             info!("terminal: task [{}] returned exit value: {:?}", exited_task_id, val);
+                            self.terminal.lock().print_to_terminal(format!("hello"));
                             if let Some(val) = val {
                                 self.terminal.lock().print_to_terminal(
                                     format!("task [{exited_task_id}] exited with code {val} ({val:#X})\n")
@@ -1161,6 +1208,11 @@ impl Shell {
 
     /// Redisplays the terminal prompt (does not insert a newline before it)
     fn redisplay_prompt(&mut self) {
+        if self.less {
+            // Do not display the prompt
+            return;
+        }
+
         let curr_env = self.env.lock();
         let mut prompt = curr_env.working_dir.lock().get_absolute_path();
         prompt = format!("{prompt}: ");
@@ -1238,7 +1290,7 @@ impl Shell {
     /// The print queue is handled first inside the loop iteration, which means that all print events in the print
     /// queue will always be printed to the text display before input events or any other managerial functions are handled. 
     /// This allows for clean appending to the scrollback buffer and prevents interleaving of text.
-    fn start(mut self) -> Result<(), &'static str> {
+    pub fn start(mut self) -> Result<(), &'static str> {
         let mut need_refresh = false;
         let mut need_prompt = false;
         self.redisplay_prompt();
