@@ -12,6 +12,7 @@ extern crate spin;
 extern crate app_io;
 extern crate stdio;
 extern crate core2;
+extern crate shell;
 //extern crate terminal_size;
 //extern crate text_display;
 
@@ -46,6 +47,7 @@ use spin::Mutex;
 use stdio::KeyEventQueueReader;
 use keycodes_ascii::Keycode;
 use keycodes_ascii::KeyAction;
+use shell::Shell;
 // use stdio::{StdioWriter, KeyEventQueueReader};
 // use core2::io::Write;
 
@@ -281,6 +283,8 @@ pub fn main(args: Vec<String>) -> isize {
     match content {
         Ok(content) => {
             let map = parse_content(&content); // Now `content` is a `String`, and `&content` is a `&String`
+            let shell = Shell::new_editor(content).expect("Failed to create new editor shell");
+            shell.start().unwrap();
         },
         Err(e) => {
             // Handle the error (e.g.,)
