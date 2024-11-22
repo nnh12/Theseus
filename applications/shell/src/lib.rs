@@ -243,8 +243,8 @@ impl Shell {
             terminal
         };
 
-        shell.input_buffer = String::new();
-        shell.key_event_consumer = Arc::new(Mutex::new(None));
+       // shell.input_buffer = String::new();
+       // shell.key_event_consumer = Arc::new(Mutex::new(None));
         Ok(shell)
     }
 
@@ -527,6 +527,9 @@ impl Shell {
         // Perform command line auto completion.
         if keyevent.keycode == Keycode::Tab {
             if self.fg_job_num.is_none() {
+                let prompt = format!("Tab");
+                self.terminal.lock().print_to_terminal(prompt);
+                //self.terminal.print_to_terminal(prompt);
                 self.complete_cmdline()?;
             }
             return Ok(());
@@ -620,6 +623,8 @@ impl Shell {
 
         // Cycles to the next previous command
         if  keyevent.keycode == Keycode::Up {
+            //let c = "Hello";
+            //self.terminal.lock().print_to_terminal("Hello");
             self.goto_previous_command()?;
             return Ok(());
         }
@@ -1208,14 +1213,9 @@ impl Shell {
 
     /// Redisplays the terminal prompt (does not insert a newline before it)
     fn redisplay_prompt(&mut self) {
-        if self.less {
-            // Do not display the prompt
-            return;
-        }
-
         let curr_env = self.env.lock();
         let mut prompt = curr_env.working_dir.lock().get_absolute_path();
-        prompt = format!("{prompt}: ");
+        prompt = format!("{prompt} : ");
         self.terminal.lock().print_to_terminal(prompt);
         self.terminal.lock().print_to_terminal(self.cmdline.clone());
     }
