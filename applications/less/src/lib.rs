@@ -295,10 +295,10 @@ pub fn main(args: Vec<String>) -> isize {
     //let terminal = Arc::new(Mutex::new(Terminal::new().expect("Failed to create terminal")));
     //let mut locked_terminal = terminal.lock().expect("failed to lock terminal");
 
-    let mut locked_terminal = Terminal::new().expect("Failed to create termina;");
-    let message = "Hello, Theseus!";
-    locked_terminal.print_to_terminal(message.to_string());
-    locked_terminal.refresh_display().unwrap();
+    //let mut locked_terminal = Terminal::new().expect("Failed to create termina;");
+    //let message = "Hello, Theseus!";
+    //locked_terminal.print_to_terminal(message.to_string());
+    //locked_terminal.refresh_display().unwrap();
 
     //if let Err(e) = run(filename) {
     //    error!("{}", e);

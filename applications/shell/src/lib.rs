@@ -527,14 +527,24 @@ impl Shell {
         // Perform command line auto completion.
         if keyevent.keycode == Keycode::Tab {
             if self.fg_job_num.is_none() {
-                let prompt = format!("Tab");
-                self.terminal.lock().print_to_terminal(prompt);
+                //let prompt = format!("Tab");
+                //self.terminal.lock().print_to_terminal(prompt);
                 //self.terminal.print_to_terminal(prompt);
                 self.complete_cmdline()?;
             }
             return Ok(());
         }
 
+        
+        if keyevent.keycode == Keycode::Q {
+            if self.fg_job_num.is_none() {
+                let prompt = format!("Quit");
+                self.terminal.lock().print_to_terminal(prompt);
+            }
+            return Ok(());
+        }
+
+  
         // Tracks what the user does whenever she presses the backspace button
         if keyevent.keycode == Keycode::Backspace  {
             if self.fg_job_num.is_some() {
