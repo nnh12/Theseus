@@ -108,7 +108,7 @@ fn get_content_string(file_path: String) -> Result<String, String> {
         None => {
              // Handle the case where the path wasn't found
              //         // For example, you could return an error or print a message:
-             Err(format!("Couldn't find file at path"))                     
+             Err(format!("Couldn't find file at path".to_string()))                     
         }
         //_ => {
             //println!("Couldn't find file at path {}", path)
@@ -167,7 +167,7 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
 
 // /// Display part of the file (may be whole file if the file is short) to the terminal, starting
 // /// at line number `line_start`.
-fn display_content(content: &String, map: &BTreeMap<usize, LineSlice>,
+fn display_content(content: &str, map: &BTreeMap<usize, LineSlice>,
                     line_start: usize, terminal: &Terminal)
                     -> Result<(), &'static str> {
      // Get exclusive control of the terminal. It is locked through the whole function to
