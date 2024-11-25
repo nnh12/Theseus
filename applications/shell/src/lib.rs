@@ -225,7 +225,7 @@ impl Shell {
 
         let terminal = Arc::new(Mutex::new(Terminal::text_editor(s.clone())?));
 
-        let mut shell = Shell {
+        let shell = Shell {
             jobs: BTreeMap::new(),
             task_to_job: BTreeMap::new(),
             key_event_consumer: Arc::new(Mutex::new(Some(key_event_consumer))),
@@ -537,9 +537,11 @@ impl Shell {
 
         
         if keyevent.keycode == Keycode::Q {
-            if self.fg_job_num.is_none() {
-                self.terminal.lock().print_to_terminal("Quit".to_string());
-            }
+            self.less = false; 
+            self.redisplay_prompt(); 
+            //if self.fg_job_num.is_none() {
+            //    self.terminal.lock().print_to_terminal("Quit".to_string());
+            //}
             return Ok(());
         }
 
@@ -1221,11 +1223,13 @@ impl Shell {
 
     /// Redisplays the terminal prompt (does not insert a newline before it)
     fn redisplay_prompt(&mut self) {
-        let curr_env = self.env.lock();
-        let mut prompt = curr_env.working_dir.lock().get_absolute_path();
-        prompt = format!("{prompt} : ");
-        self.terminal.lock().print_to_terminal(prompt);
-        self.terminal.lock().print_to_terminal(self.cmdline.clone());
+        if !self.less {
+            let curr_env = self.env.lock();
+            let mut prompt = curr_env.working_dir.lock().get_absolute_path();
+            prompt = format!("{prompt} : ");
+            self.terminal.lock().print_to_terminal(prompt);
+            self.terminal.lock().print_to_terminal(self.cmdline.clone());
+        }
     }
 
     /// If there is any output event from running application, print it to the screen, otherwise it does nothing.
