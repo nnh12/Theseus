@@ -53,12 +53,12 @@ use shell::Shell;
 
 
 // The metadata for each line in the file.
-struct LineSlice {
-  // The starting index in the String for a line. (inclusive)
-  start: usize,
-  // The ending index in the String for a line. (exclusive)
-  end: usize
-}
+// struct LineSlice {
+//   // The starting index in the String for a line. (inclusive)
+//   start: usize,
+//   // The ending index in the String for a line. (exclusive)
+//   end: usize
+// }
 
 //fn get_terminal_dimensions() -> Option<(usize, usize)> {
 //    match terminal_size() {
