@@ -538,8 +538,7 @@ impl Shell {
         
         if keyevent.keycode == Keycode::Q {
             if self.fg_job_num.is_none() {
-                let prompt = format!("Quit");
-                self.terminal.lock().print_to_terminal(prompt);
+                self.terminal.lock().print_to_terminal("Quit".to_string());
             }
             return Ok(());
         }
@@ -1089,7 +1088,6 @@ impl Shell {
                             // so we need to downcast it from Any to isize.
                             let val: Option<&isize> = exit_status.downcast_ref::<isize>();
                             info!("terminal: task [{}] returned exit value: {:?}", exited_task_id, val);
-                            self.terminal.lock().print_to_terminal(format!("hello"));
                             if let Some(val) = val {
                                 self.terminal.lock().print_to_terminal(
                                     format!("task [{exited_task_id}] exited with code {val} ({val:#X})\n")
