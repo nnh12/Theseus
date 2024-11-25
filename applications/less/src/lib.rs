@@ -106,13 +106,10 @@ fn get_content_string(file_path: String) -> Result<String, String> {
             }
         },
         None => {
-             // Handle the case where the path wasn't found
-             //         // For example, you could return an error or print a message:
-             Err(format!("Couldn't find file at path".to_string()))                     
+            println!("Warning: path is not found");
+            // Optionally, return a default or handle it another way.
+            Ok("".to_string()) // Example: return empty string or a default value  
         }
-        //_ => {
-            //println!("Couldn't find file at path {}", path)
-        //}
     }
 }
 
@@ -167,82 +164,82 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
 
 // /// Display part of the file (may be whole file if the file is short) to the terminal, starting
 // /// at line number `line_start`.
-fn display_content(content: &str, map: &BTreeMap<usize, LineSlice>,
-                    line_start: usize, terminal: &Terminal)
-                    -> Result<(), &'static str> {
-     // Get exclusive control of the terminal. It is locked through the whole function to
-     // avoid the overhead of locking it multiple times.
-     let mut locked_terminal = Terminal::new().expect("Failed to create terminal");
-     // let mut locked_terminal = terminal.lock();
+// fn display_content(content: &str, map: &BTreeMap<usize, LineSlice>,
+//                     line_start: usize, terminal: &Terminal)
+//                     -> Result<(), &'static str> {
+//      // Get exclusive control of the terminal. It is locked through the whole function to
+//      // avoid the overhead of locking it multiple times.
+//      let mut locked_terminal = Terminal::new().expect("Failed to create terminal");
+//      // let mut locked_terminal = terminal.lock();
 
-     // Calculate the last line to display. Make sure we don't extend over the end of the file.
-     let (_width, height) = locked_terminal.get_text_dimensions();
-     let mut line_end: usize = line_start + height;
-     if line_end > map.len() {
-         line_end = map.len();
-     }
+//      // Calculate the last line to display. Make sure we don't extend over the end of the file.
+//      let (_width, height) = locked_terminal.get_text_dimensions();
+//      let mut line_end: usize = line_start + height;
+//      if line_end > map.len() {
+//          line_end = map.len();
+//      }
 
-     // Refresh the terminal with the lines we've selected.
-     let start_indices = match map.get(&line_start) {
-         Some(indices) => indices,
-         None => return Err("failed to get the byte indices of the first line")
-     };
-     let end_indices = match map.get(&(line_end - 1)) {
-         Some(indices) => indices,
-         None => return Err("failed to get the byte indices of the last line")
-     };
-     locked_terminal.clear();
-     locked_terminal.print_to_terminal(
-         content[start_indices.start..end_indices.end].to_string()
-     );
-     locked_terminal.refresh_display()
-}
+//      // Refresh the terminal with the lines we've selected.
+//      let start_indices = match map.get(&line_start) {
+//          Some(indices) => indices,
+//          None => return Err("failed to get the byte indices of the first line")
+//      };
+//      let end_indices = match map.get(&(line_end - 1)) {
+//          Some(indices) => indices,
+//          None => return Err("failed to get the byte indices of the last line")
+//      };
+//      locked_terminal.clear();
+//      locked_terminal.print_to_terminal(
+//          content[start_indices.start..end_indices.end].to_string()
+//      );
+//      locked_terminal.refresh_display()
+// }
 
 // /// Handle user keyboard strikes and perform corresponding operations.
-fn event_handler_loop(content: &String, map: &BTreeMap<usize, LineSlice>,
-                       key_event_queue: &KeyEventQueueReader)
-                       -> Result<(), &'static str> {
-     // Get a reference to this task's terminal. The terminal is *not* locked here.
-     //let terminal = app_io::get_my_terminal().ok_or("couldn't get terminal for `less` app")?;
-     let mut terminal = Terminal::new().expect("Failed to create terminal");
+// fn event_handler_loop(content: &String, map: &BTreeMap<usize, LineSlice>,
+//                        key_event_queue: &KeyEventQueueReader)
+//                        -> Result<(), &'static str> {
+//      // Get a reference to this task's terminal. The terminal is *not* locked here.
+//      //let terminal = app_io::get_my_terminal().ok_or("couldn't get terminal for `less` app")?;
+//      let mut terminal = Terminal::new().expect("Failed to create terminal");
 
-     // Display the beginning of the file.
-     let mut line_start: usize = 0;
-     display_content(content, map, 0, &terminal)?;
+//      // Display the beginning of the file.
+//      let mut line_start: usize = 0;
+//      display_content(content, map, 0, &terminal)?;
 
-     // Handle user keyboard strikes.
-     loop {
-         match key_event_queue.read_one() {
-             Some(keyevent) => {
-                 if keyevent.action != KeyAction::Pressed { continue; }
-                 match keyevent.keycode {
-                     // Quit the program on "Q".
-                     Keycode::Q => {
-                         //let mut locked_terminal = terminal.lock();
-                         //locked_terminal.clear();
-                         return terminal.refresh_display()
-                     },
-                     // Scroll down a line on "Down".
-                     Keycode::Down => {
-                         if line_start + 1 < map.len() {
-                             line_start += 1;
-                         }
-                         display_content(content, map, line_start, &terminal)?;
-                     },
-                     // Scroll up a line on "Up".
-                     Keycode::Up => {
-                         if line_start > 0 {
-                             line_start -= 1;
-                         }
-                         display_content(content, map, line_start, &terminal)?;
-                     }
-                     _ => {}
-                 }
-             },
-             _ => {}
-         }
-     }
-}
+//      // Handle user keyboard strikes.
+//      loop {
+//          match key_event_queue.read_one() {
+//              Some(keyevent) => {
+//                  if keyevent.action != KeyAction::Pressed { continue; }
+//                  match keyevent.keycode {
+//                      // Quit the program on "Q".
+//                      Keycode::Q => {
+//                          //let mut locked_terminal = terminal.lock();
+//                          //locked_terminal.clear();
+//                          return terminal.refresh_display()
+//                      },
+//                      // Scroll down a line on "Down".
+//                      Keycode::Down => {
+//                          if line_start + 1 < map.len() {
+//                              line_start += 1;
+//                          }
+//                          display_content(content, map, line_start, &terminal)?;
+//                      },
+//                      // Scroll up a line on "Up".
+//                      Keycode::Up => {
+//                          if line_start > 0 {
+//                              line_start -= 1;
+//                          }
+//                          display_content(content, map, line_start, &terminal)?;
+//                      }
+//                      _ => {}
+//                  }
+//              },
+//              _ => {}
+//          }
+//      }
+// }
 
 
 pub fn main(args: Vec<String>) -> isize {
