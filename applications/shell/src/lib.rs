@@ -248,8 +248,6 @@ impl Shell {
         Ok(shell)
     }
 
-
-
     /// Insert a character to the command line buffer in the shell.
     /// The position to insert is determined by the position of the cursor in the terminal. 
     /// `sync_terminal` indicates whether the terminal screen will be synchronically updated.
@@ -527,9 +525,6 @@ impl Shell {
         // Perform command line auto completion.
         if keyevent.keycode == Keycode::Tab {
             if self.fg_job_num.is_none() {
-                //let prompt = format!("Tab");
-                //self.terminal.lock().print_to_terminal(prompt);
-                //self.terminal.print_to_terminal(prompt);
                 self.complete_cmdline()?;
             }
             return Ok(());
@@ -537,11 +532,10 @@ impl Shell {
 
         
         if keyevent.keycode == Keycode::Q {
-            self.less = false; 
+            self.less = false;
+            self.input_buffer = String::new();
+            self.terminal.lock().clear();
             self.redisplay_prompt(); 
-            //if self.fg_job_num.is_none() {
-            //    self.terminal.lock().print_to_terminal("Quit".to_string());
-            //}
             return Ok(());
         }
 
