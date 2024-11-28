@@ -640,8 +640,6 @@ impl Shell {
 
         // Cycles to the next previous command
         if  keyevent.keycode == Keycode::Up {
-            //let c = "Hello";
-            //self.terminal.lock().print_to_terminal("Hello");
             self.goto_previous_command()?;
             return Ok(());
         }
@@ -1449,14 +1447,54 @@ impl Shell {
         }
 
         let file_path = args[0];
-        self.terminal.lock().print_to_terminal(format!("The second element is: {}\n", file_path).to_string());
         let content = self.get_content_string(file_path.to_string());
 
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
-        let _ = self.parse_content(content.unwrap_or("".to_string()));
+        let map = self.parse_content(content.clone().unwrap_or("".to_string()));
+        match map {
+            Ok(map) => {
+                let _ = self.display_content_slice(content.clone().unwrap_or("".to_string()), map, 0);
+            }
+            Err(e) => {
+                self.terminal.lock().print_to_terminal(format!("Error parsing content: {}", e).to_string());
+            }
+        }
+
         self.redisplay_prompt();
         Ok(())
+    }
+
+    fn display_content_slice(&mut self, content: String, map: BTreeMap<usize, LineSlice>,
+        line_start: usize)
+        -> Result<(), &'static str> {
+        // Get exclusive control of the terminal. It is locked through the whole function to
+        // avoid the overhead of locking it multiple times.
+
+        // Calculate the last line to display. Make sure we don't extend over the end of the file.
+        let (_width, height) = self.terminal.lock().get_text_dimensions();
+        let mut line_end: usize = line_start + (height-20);
+        
+        if line_end > map.len() {
+            line_end = map.len();
+        }
+
+        // Refresh the terminal with the lines we've selected.
+        let start_indices = match map.get(&line_start) {
+            Some(indices) => indices,
+                None => return Err("failed to get the byte indices of the first line")
+        };
+        
+        let end_indices = match map.get(&(line_end - 1)) {
+            Some(indices) => indices,
+            None => return Err("failed to get the byte indices of the last line")
+        };
+
+        self.terminal.lock().clear();
+        self.terminal.lock().print_to_terminal(
+            content[start_indices.start..end_indices.end].to_string()
+        );
+        self.terminal.lock().refresh_display()
     }
 
     fn parse_content(&mut self, content: String) -> Result<BTreeMap<usize, LineSlice>, &'static str> {
