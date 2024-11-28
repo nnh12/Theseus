@@ -1425,7 +1425,7 @@ impl Shell {
                 "fg" => self.execute_internal_fg(),
                 "bg" => self.execute_internal_bg(),
                 "clear" => self.execute_internal_clear(),
-                "less" => self.execute_internal_less(iter),
+                "less" => self.execute_internal_less(iter.collect()),
                 _ => Ok(())
             }
         } else {
@@ -1433,11 +1433,33 @@ impl Shell {
         }
     }
 
+    fn execute_internal_less(&mut self, args: Vec<&str>) -> Result<(), &'static str> {
+        if args.len() < 1 {
+            self.terminal.lock().print_to_terminal("Not enough arguments provided.\n".to_string());
+            self.clear_cmdline(false)?;
+            self.redisplay_prompt();
+            return Ok(())
+        }
+
+        let file_path = args[0];
+        self.terminal.lock().print_to_terminal(format!("The second element is: {}\n", file_path).to_string());
+        let content = self.get_content_string(file_path.to_string());
+
+        self.terminal.lock().clear();
+        self.clear_cmdline(false)?;
+        self.terminal.lock().print_to_terminal(content.unwrap_or("".to_string()));
+        self.redisplay_prompt();
+        Ok(())
+    }
+
     fn get_content_string(&self, file_path: String) -> Result<String, String> {
         let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
             return Err("failed to get current task".to_string());
         };
-        let path = Path::new(file_path.as_str());
+
+        let prompt = self.env.lock().working_dir.lock().get_absolute_path();
+        let full_path = format!("{}/{}", prompt.to_string(), file_path.to_string());
+        let path = Path::new(full_path.as_str());
         
         // navigate to the filepath specified by first argument
         match path.get(&curr_wd) {
@@ -1465,27 +1487,17 @@ impl Shell {
                                 return Err(format!("Failed to read file: {:?}", utf8_err));
                             }
                         };
-                        self.terminal.lock().print_to_terminal(read_string.to_string());
+                        //self.terminal.lock().print_to_terminal(read_string.to_string());
                         Ok(read_string.to_string())
                     }
                 }
             },
             None => {
-                self.terminal.lock().print_to_terminal("Warning: path is not found".to_string());
-                // Optionally, return a default or handle it another way.
+                self.terminal.lock().print_to_terminal(format!("Path not found: {}\n", path.to_string()).to_string());
                 Ok("".to_string()) // Example: return empty string or a default value  
             }
         }
     }
-
-    fn execute_internal_less<'a, I>(&mut self, iter: I)-> Result<(), &'static str> {
-        self.terminal.lock().clear();
-        self.clear_cmdline(false)?;
-        self.redisplay_prompt();
-        self.terminal.lock().print_to_terminal("less".to_string());
-        Ok(())
-    }
-
 
     fn execute_internal_clear(&mut self) -> Result<(), &'static str> {
         self.terminal.lock().clear();
