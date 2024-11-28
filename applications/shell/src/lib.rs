@@ -44,6 +44,7 @@ use core2::io::Write;
 use core::ops::Deref;
 use app_io::IoStreams;
 use fs_node::FileOrDir;
+use core::str;
 
 /// The status of a job.
 #[derive(PartialEq)]
@@ -207,6 +208,10 @@ impl Shell {
             less: false,
             terminal
         })
+    }
+
+    pub fn get_terminal(&self) -> Arc<Mutex<Terminal>> {
+        Arc::clone(&self.terminal)
     }
 
      pub fn new_editor(s: String) -> Result<Shell, &'static str> {
@@ -1402,6 +1407,7 @@ impl Shell {
                 "fg" => return true,
                 "bg" => return true,
                 "clear" => return true,
+                "less" => return true,
                 _ => return false
             }
         }
@@ -1419,12 +1425,67 @@ impl Shell {
                 "fg" => self.execute_internal_fg(),
                 "bg" => self.execute_internal_bg(),
                 "clear" => self.execute_internal_clear(),
+                "less" => self.execute_internal_less(iter),
                 _ => Ok(())
             }
         } else {
             Ok(())
         }
     }
+
+    fn get_content_string(&self, file_path: String) -> Result<String, String> {
+        let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
+            return Err("failed to get current task".to_string());
+        };
+        let path = Path::new(file_path.as_str());
+        
+        // navigate to the filepath specified by first argument
+        match path.get(&curr_wd) {
+    
+            Some(file_dir_enum) => {
+                match file_dir_enum {
+                    FileOrDir::Dir(directory) => {
+                        Err(format!("{:?} a directory, cannot 'less' non-files.", directory.lock().get_name()))
+                    }
+                    FileOrDir::File(file) => {
+                        let mut file_locked = file.lock();
+                        let file_size = file_locked.len();
+                        let mut string_slice_as_bytes = vec![0; file_size];
+                        let _num_bytes_read = match file_locked.read_at(&mut string_slice_as_bytes, 0) {
+                            Ok(num) => num,
+                            Err(e) => {
+                                self.terminal.lock().print_to_terminal("Failed to read error ".to_string());
+                                return Err(format!("Failed to file size: {:?}", e));
+                            }
+                        };
+                        let read_string = match str::from_utf8(&string_slice_as_bytes) {
+                            Ok(string_slice) => string_slice,
+                            Err(utf8_err) => {
+                                self.terminal.lock().print_to_terminal("File was not a printable UTF-8 text file".to_string());
+                                return Err(format!("Failed to read file: {:?}", utf8_err));
+                            }
+                        };
+                        self.terminal.lock().print_to_terminal(read_string.to_string());
+                        Ok(read_string.to_string())
+                    }
+                }
+            },
+            None => {
+                self.terminal.lock().print_to_terminal("Warning: path is not found".to_string());
+                // Optionally, return a default or handle it another way.
+                Ok("".to_string()) // Example: return empty string or a default value  
+            }
+        }
+    }
+
+    fn execute_internal_less<'a, I>(&mut self, iter: I)-> Result<(), &'static str> {
+        self.terminal.lock().clear();
+        self.clear_cmdline(false)?;
+        self.redisplay_prompt();
+        self.terminal.lock().print_to_terminal("less".to_string());
+        Ok(())
+    }
+
 
     fn execute_internal_clear(&mut self) -> Result<(), &'static str> {
         self.terminal.lock().clear();
