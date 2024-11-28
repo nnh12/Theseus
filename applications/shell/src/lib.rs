@@ -56,6 +56,13 @@ enum JobStatus {
     Stopped
 }
 
+struct LineSlice {
+    // The starting index in the String for a line. (inclusive)
+    start: usize,
+    // The ending index in the String for a line. (exclusive)
+    end: usize
+ }
+
 /// This structure is used by shell to track its spawned applications. Each successfully
 /// evaluated command line will create a `Job`. Each job contains one or more tasks.
 /// Tasks are stored in `tasks` in the same sequence as in the command line.
@@ -1447,9 +1454,49 @@ impl Shell {
 
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
-        self.terminal.lock().print_to_terminal(content.unwrap_or("".to_string()));
+        let _ = self.parse_content(content.unwrap_or("".to_string()));
         self.redisplay_prompt();
         Ok(())
+    }
+
+    fn parse_content(&mut self, content: String) -> Result<BTreeMap<usize, LineSlice>, &'static str> {
+        // Get the width and height of the terminal screen.
+        let (width, height) = self.terminal.lock().get_text_dimensions();
+
+        self.terminal.lock().print_to_terminal(format!("{} {}\n", width, height).to_string());
+   
+        // Record the slice index of each line.
+        let mut map: BTreeMap<usize, LineSlice> = BTreeMap::new();
+        // Number of the current line.
+        let mut cur_line_num: usize = 0;
+        // Number of characters in the current line.
+        let mut char_num_in_line: usize = 0;
+        // Starting index in the String of the current line.
+        let mut line_start_idx: usize = 0;
+        // The previous character during the iteration. Set '\0' as the initial value since we don't expect
+        // to encounter this character in the beginning of the file.
+        let mut previous_char: char = '\0';
+   
+        // Iterate through the whole file.
+        // `c` is the current character. `str_idx` is the index of the first byte of the current character.
+        for (str_idx, c) in content.char_indices() {
+            // When we need to begin a new line, record the previous line in the map.
+            if char_num_in_line == width || previous_char == '\n' {
+                map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: str_idx });
+                char_num_in_line = 0;
+                line_start_idx = str_idx;
+                cur_line_num += 1;
+            }
+            char_num_in_line += 1;
+            previous_char = c;
+        }
+        map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: content.len() });
+   
+        for (line_num, line_slice) in &map {
+            self.terminal.lock().print_to_terminal(format!("Line {}: start = {}, end = {}\n", line_num, line_slice.start, line_slice.end).to_string());
+        }
+
+        Ok(map)
     }
 
     fn get_content_string(&self, file_path: String) -> Result<String, String> {
