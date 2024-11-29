@@ -1584,6 +1584,41 @@ impl Shell {
         }
     }
 
+    // /// Handle user keyboard strikes and perform corresponding operations.
+    fn event_handler_loop(&self, content: String, map: &BTreeMap<usize, LineSlice>,
+        key_event: KeyEvent) -> Result<(), &'static str> {
+        // Get a reference to this task's terminal. The terminal is *not* locked here.
+
+        // Display the beginning of the file.
+        let mut line_start: usize = 0;
+        self.display_content_slice(content, map, 0)?;
+
+        // Handle user keyboard strikes.
+        loop {
+
+            // Quit the program on "Q".
+            if key_event.keycode == Keycode::Q {
+                self.terminal.lock().clear();
+                return self.terminal.lock().refresh_display()
+            }
+            // Scroll down a line on "Down".
+            else if key_event.keycode ==  Keycode::Down {
+                if line_start + 1 < map.len() {
+                    line_start += 1;
+                }
+                self.display_content_slice(content, map, line_start)?;
+            }
+            // Scroll up a line on "Up".
+            else if key_event.keycode ==  Keycode::Up {
+                if line_start > 0 {
+                    line_start -= 1;
+                }
+                self.display_content_slice(content, map, line_start)?;
+            }
+
+        }
+    }
+
     fn execute_internal_clear(&mut self) -> Result<(), &'static str> {
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
