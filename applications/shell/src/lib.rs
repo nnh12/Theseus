@@ -314,7 +314,6 @@ impl Shell {
     /// `sync_terminal` indicates whether the terminal screen will be synchronically updated.
     fn set_cmdline(&mut self, s: String, sync_terminal: bool) -> Result<(), &'static str> {
         let mut s1 = s.clone();
-        s1.push_str("hello");
         if !self.cmdline.is_empty() {
             self.clear_cmdline(sync_terminal)?;
         }
@@ -544,10 +543,11 @@ impl Shell {
 
         
         if keyevent.keycode == Keycode::Q {
-            self.less = false;
-            self.input_buffer = String::new();
-            self.terminal.lock().clear();
-            self.redisplay_prompt(); 
+            if self.less == true {
+                self.less = false;
+                self.terminal.lock().clear();
+                self.redisplay_prompt();
+            }
             return Ok(());
         }
 
@@ -1448,6 +1448,7 @@ impl Shell {
 
         let file_path = args[0];
         let content = self.get_content_string(file_path.to_string());
+        self.less = true;
 
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
@@ -1464,7 +1465,7 @@ impl Shell {
         self.redisplay_prompt();
         Ok(())
     }
-
+ 
     fn display_content_slice(&mut self, content: String, map: BTreeMap<usize, LineSlice>,
         line_start: usize)
         -> Result<(), &'static str> {
@@ -1581,41 +1582,6 @@ impl Shell {
                 self.terminal.lock().print_to_terminal(format!("Path not found: {}\n", path.to_string()).to_string());
                 Ok("".to_string()) // Example: return empty string or a default value  
             }
-        }
-    }
-
-    // /// Handle user keyboard strikes and perform corresponding operations.
-    fn event_handler_loop(&self, content: String, map: &BTreeMap<usize, LineSlice>,
-        key_event: KeyEvent) -> Result<(), &'static str> {
-        // Get a reference to this task's terminal. The terminal is *not* locked here.
-
-        // Display the beginning of the file.
-        let mut line_start: usize = 0;
-        self.display_content_slice(content, map, 0)?;
-
-        // Handle user keyboard strikes.
-        loop {
-
-            // Quit the program on "Q".
-            if key_event.keycode == Keycode::Q {
-                self.terminal.lock().clear();
-                return self.terminal.lock().refresh_display()
-            }
-            // Scroll down a line on "Down".
-            else if key_event.keycode ==  Keycode::Down {
-                if line_start + 1 < map.len() {
-                    line_start += 1;
-                }
-                self.display_content_slice(content, map, line_start)?;
-            }
-            // Scroll up a line on "Up".
-            else if key_event.keycode ==  Keycode::Up {
-                if line_start > 0 {
-                    line_start -= 1;
-                }
-                self.display_content_slice(content, map, line_start)?;
-            }
-
         }
     }
 
