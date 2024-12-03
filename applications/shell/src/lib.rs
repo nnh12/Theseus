@@ -176,7 +176,11 @@ pub struct Shell {
     /// the terminal that is bind with the shell instance
     terminal: Arc<Mutex<Terminal>>,
     /// The indicator to show "text editing" mode
-    less: bool
+    less: bool,
+    // String to print
+    content: String,
+    // BTree Map to keep track of file new line indices
+    map: BTreeMap<usize, LineSlice>
 }
 
 impl Shell {
@@ -313,14 +317,13 @@ impl Shell {
     /// Set the command line to be a specific string.
     /// `sync_terminal` indicates whether the terminal screen will be synchronically updated.
     fn set_cmdline(&mut self, s: String, sync_terminal: bool) -> Result<(), &'static str> {
-        let mut s1 = s.clone();
         if !self.cmdline.is_empty() {
             self.clear_cmdline(sync_terminal)?;
         }
         self.cmdline = s.clone();
         self.update_cursor_pos(0)?;
         if sync_terminal {
-            self.terminal.lock().print_to_terminal(s1);
+            self.terminal.lock().print_to_terminal(s);
         }
         Ok(())
     }
