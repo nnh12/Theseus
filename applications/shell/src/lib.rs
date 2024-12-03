@@ -220,50 +220,7 @@ impl Shell {
             terminal
         })
     }
-
-    pub fn get_terminal(&self) -> Arc<Mutex<Terminal>> {
-        Arc::clone(&self.terminal)
-    }
-
-     pub fn new_editor(s: String) -> Result<Shell, &'static str> {
-        // Initialize a dfqueue for the terminal object to handle printing from applications.
-        // Note that this is only to support legacy output. Newly developed applications should
-        // turn to use `stdio` provided by the `stdio` crate together with the support of `app_io`.
-        let terminal_print_dfq: DFQueue<Event>  = DFQueue::new();
-        let print_consumer = terminal_print_dfq.into_consumer();
-        let print_producer = print_consumer.obtain_producer();
-
-        let key_event_queue: KeyEventQueue = KeyEventQueue::new();
-        let key_event_producer = key_event_queue.get_writer();
-        let key_event_consumer = key_event_queue.get_reader();
-
-        let env = Environment::default();
-
-        let terminal = Arc::new(Mutex::new(Terminal::text_editor(s.clone())?));
-
-        let shell = Shell {
-            jobs: BTreeMap::new(),
-            task_to_job: BTreeMap::new(),
-            key_event_consumer: Arc::new(Mutex::new(Some(key_event_consumer))),
-            key_event_producer,
-            fg_job_num: None,
-            cmdline: String::new(),
-            input_buffer: String::new(),
-            command_history: Vec::new(),
-            history_index: 0,
-            buffered_cmd_recorded: false,
-            print_consumer,
-            print_producer,
-            env: Arc::new(Mutex::new(env)),
-            less: true,
-            terminal
-        };
-
-       // shell.input_buffer = String::new();
-       // shell.key_event_consumer = Arc::new(Mutex::new(None));
-        Ok(shell)
-    }
-
+    
     /// Insert a character to the command line buffer in the shell.
     /// The position to insert is determined by the position of the cursor in the terminal. 
     /// `sync_terminal` indicates whether the terminal screen will be synchronically updated.
