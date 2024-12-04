@@ -186,7 +186,7 @@ pub struct Shell {
 impl Shell {
     /// Create a new shell. Currently the shell will bind to the default terminal instance provided
     /// by the `app_io` crate.
-    pub fn new() -> Result<Shell, &'static str> {
+    fn new() -> Result<Shell, &'static str> {
         // Initialize a dfqueue for the terminal object to handle printing from applications.
         // Note that this is only to support legacy output. Newly developed applications should
         // turn to use `stdio` provided by the `stdio` crate together with the support of `app_io`.
@@ -216,11 +216,13 @@ impl Shell {
             print_consumer,
             print_producer,
             env: Arc::new(Mutex::new(env)),
+            terminal,
             less: false,
-            terminal
+            content: String::new(),
+            map: BTreeMap::new()
         })
     }
-    
+
     /// Insert a character to the command line buffer in the shell.
     /// The position to insert is determined by the position of the cursor in the terminal. 
     /// `sync_terminal` indicates whether the terminal screen will be synchronically updated.
@@ -1412,22 +1414,14 @@ impl Shell {
 
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
-        let map = self.parse_content(content.clone().unwrap_or("".to_string()));
-        match map {
-            Ok(map) => {
-                let _ = self.display_content_slice(content.clone().unwrap_or("".to_string()), map, 0);
-            }
-            Err(e) => {
-                self.terminal.lock().print_to_terminal(format!("Error parsing content: {}", e).to_string());
-            }
-        }
+        self.parse_content(content.clone().unwrap_or("".to_string()));
+        let _ = self.display_content_slice(content.clone().unwrap_or("".to_string()), 0);
 
         self.redisplay_prompt();
         Ok(())
     }
  
-    fn display_content_slice(&mut self, content: String, map: BTreeMap<usize, LineSlice>,
-        line_start: usize)
+    fn display_content_slice(&mut self, content: String, line_start: usize)
         -> Result<(), &'static str> {
         // Get exclusive control of the terminal. It is locked through the whole function to
         // avoid the overhead of locking it multiple times.
@@ -1436,17 +1430,17 @@ impl Shell {
         let (_width, height) = self.terminal.lock().get_text_dimensions();
         let mut line_end: usize = line_start + (height-20);
         
-        if line_end > map.len() {
-            line_end = map.len();
+        if line_end > self.map.len() {
+            line_end = self.map.len();
         }
 
         // Refresh the terminal with the lines we've selected.
-        let start_indices = match map.get(&line_start) {
+        let start_indices = match self.map.get(&line_start) {
             Some(indices) => indices,
                 None => return Err("failed to get the byte indices of the first line")
         };
         
-        let end_indices = match map.get(&(line_end - 1)) {
+        let end_indices = match self.map.get(&(line_end - 1)) {
             Some(indices) => indices,
             None => return Err("failed to get the byte indices of the last line")
         };
@@ -1458,14 +1452,12 @@ impl Shell {
         self.terminal.lock().refresh_display()
     }
 
-    fn parse_content(&mut self, content: String) -> Result<BTreeMap<usize, LineSlice>, &'static str> {
+    fn parse_content(&mut self, content: String) {
         // Get the width and height of the terminal screen.
         let (width, height) = self.terminal.lock().get_text_dimensions();
 
         self.terminal.lock().print_to_terminal(format!("{} {}\n", width, height).to_string());
    
-        // Record the slice index of each line.
-        let mut map: BTreeMap<usize, LineSlice> = BTreeMap::new();
         // Number of the current line.
         let mut cur_line_num: usize = 0;
         // Number of characters in the current line.
@@ -1481,7 +1473,7 @@ impl Shell {
         for (str_idx, c) in content.char_indices() {
             // When we need to begin a new line, record the previous line in the map.
             if char_num_in_line == width || previous_char == '\n' {
-                map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: str_idx });
+                self.map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: str_idx });
                 char_num_in_line = 0;
                 line_start_idx = str_idx;
                 cur_line_num += 1;
@@ -1489,13 +1481,11 @@ impl Shell {
             char_num_in_line += 1;
             previous_char = c;
         }
-        map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: content.len() });
+        self.map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: content.len() });
    
-        for (line_num, line_slice) in &map {
+        for (line_num, line_slice) in &self.map {
             self.terminal.lock().print_to_terminal(format!("Line {}: start = {}, end = {}\n", line_num, line_slice.start, line_slice.end).to_string());
         }
-
-        Ok(map)
     }
 
     fn get_content_string(&self, file_path: String) -> Result<String, String> {
