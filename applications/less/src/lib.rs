@@ -245,50 +245,36 @@ fn parse_content(content: &String) -> Result<BTreeMap<usize, LineSlice>, &'stati
 pub fn main(args: Vec<String>) -> isize {
 
     // // Get stdout.
-    let stdout = match app_io::stdout() {
-         Ok(stdout) => stdout,
-         Err(e) => {
-             println!("{}", e);
-             return 1;
-         }
-    };
+    // let stdout = match app_io::stdout() {
+    //      Ok(stdout) => stdout,
+    //      Err(e) => {
+    //          println!("{}", e);
+    //          return 1;
+    //      }
+    // };
 
-    // // Set and parse options.
-    let mut opts = Options::new();
-    opts.optflag("h", "help", "print this help menu");
-    let matches = match opts.parse(args) {
-        Ok(m) => m,
-        Err(e) => {
-            //Err(format!("Is a directory, cannot 'less' non-files."))
-            format!("{}", e);
-            //print_usage(opts, stdout);
-            return -1;
-        }
-    };
-    if matches.opt_present("h") {
-        //print_usage(opts, stdout);
-        return 0;
-    }
-    if matches.free.is_empty() {
-        //print_usage(opts, stdout);
-        return 0;
-    }
-    let filename = matches.free[0].clone();
+    // // // Set and parse options.
+    // let mut opts = Options::new();
+    // opts.optflag("h", "help", "print this help menu");
+    // let matches = match opts.parse(args) {
+    //     Ok(m) => m,
+    //     Err(e) => {
+    //         //Err(format!("Is a directory, cannot 'less' non-files."))
+    //         format!("{}", e);
+    //         //print_usage(opts, stdout);
+    //         return -1;
+    //     }
+    // };
+    // if matches.opt_present("h") {
+    //     //print_usage(opts, stdout);
+    //     return 0;
+    // }
+    // if matches.free.is_empty() {
+    //     //print_usage(opts, stdout);
+    //     return 0;
+    // }
+    // let filename = matches.free[0].clone();
     
-    let content = get_content_string(filename);
-    
-    match content {
-        Ok(content) => {
-            let map = parse_content(&content); // Now `content` is a `String`, and `&content` is a `&String`
-            let shell = Shell::new_editor(content).expect("Failed to create new editor shell");
-            shell.start().unwrap();
-        },
-        Err(e) => {
-            // Handle the error (e.g.,)
-            println!("Error: {}", e);
-        }
-    }
-
     0
 }
 
