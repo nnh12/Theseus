@@ -29,13 +29,8 @@ path = "../../kernel/app_io"
 [dependencies.stdio]
 path = "../../libs/stdio"
 
-[dependencies.shell]
-path = "../shell"
-
-
 [dependencies.log]
 version = "0.4.8"
-
 
 [lib]
 crate-type = ["rlib"]
