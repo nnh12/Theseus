@@ -504,12 +504,10 @@ impl Shell {
         }
 
         
-        if keyevent.keycode == Keycode::Q {
-            if self.less == true {
-                self.less = false;
-                self.terminal.lock().clear();
-                self.redisplay_prompt();
-            }
+        if keyevent.keycode == Keycode::Q && self.less{
+            self.less = false;
+            self.terminal.lock().clear();
+            self.redisplay_prompt();
             return Ok(());
         }
 
