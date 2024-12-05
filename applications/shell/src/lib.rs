@@ -177,10 +177,12 @@ pub struct Shell {
     terminal: Arc<Mutex<Terminal>>,
     /// The indicator to show "text editing" mode
     less: bool,
-    // String to print
+    // string to print
     content: String,
     // BTree Map to keep track of file new line indices
-    map: BTreeMap<usize, LineSlice>
+    map: BTreeMap<usize, LineSlice>,
+    // Line 
+    line_start: usize
 }
 
 impl Shell {
@@ -219,7 +221,8 @@ impl Shell {
             terminal,
             less: false,
             content: String::new(),
-            map: BTreeMap::new()
+            map: BTreeMap::new(),
+            line_start: 0
         })
     }
 
@@ -511,7 +514,24 @@ impl Shell {
             return Ok(());
         }
 
-  
+        // Cycles to the next previous command
+        if  keyevent.keycode == Keycode::Up && self.less {
+            if self.line_start > 0 {
+                self.line_start -= 1;
+            }
+            let _ = self.display_content_slice();
+            return Ok(());
+        }
+
+        // Cycles to the next previous command
+        if  keyevent.keycode == Keycode::Down && self.less {
+            if self.line_start + 1 < self.map.len() {
+                self.line_start += 1;
+            }
+            let _ = self.display_content_slice();
+            return Ok(());
+        }
+
         // Tracks what the user does whenever she presses the backspace button
         if keyevent.keycode == Keycode::Backspace  {
             if self.fg_job_num.is_some() {
@@ -1403,7 +1423,7 @@ impl Shell {
             self.terminal.lock().print_to_terminal("not enough arguments provided.\n".to_string());
             self.clear_cmdline(false)?;
             self.redisplay_prompt();
-            Ok(())
+            return Ok(())
         }
 
         self.less = true;
@@ -1412,27 +1432,25 @@ impl Shell {
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
         self.parse_content();
-        let _ = self.display_content_slice(0);
-
+        let _ = self.display_content_slice();
         self.redisplay_prompt();
         Ok(())
     }
  
-    fn display_content_slice(&mut self, line_start: usize)
-        -> Result<(), &'static str> {
+    fn display_content_slice(&mut self) -> Result<(), &'static str> {
         // Get exclusive control of the terminal. It is locked through the whole function to
         // avoid the overhead of locking it multiple times.
 
         // Calculate the last line to display. Make sure we don't extend over the end of the file.
         let (_width, height) = self.terminal.lock().get_text_dimensions();
-        let mut line_end: usize = line_start + (height-20);
+        let mut line_end: usize = self.line_start + (height-20);
         
         if line_end > self.map.len() {
             line_end = self.map.len();
         }
 
         // Refresh the terminal with the lines we've selected.
-        let start_indices = match self.map.get(&line_start) {
+        let start_indices = match self.map.get(&self.line_start) {
             Some(indices) => indices,
                 None => return Err("failed to get the byte indices of the first line")
         };
