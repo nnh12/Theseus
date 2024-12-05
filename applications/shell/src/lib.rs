@@ -56,13 +56,6 @@ enum JobStatus {
     Stopped
 }
 
-struct LineSlice {
-    // The starting index in the String for a line. (inclusive)
-    start: usize,
-    // The ending index in the String for a line. (exclusive)
-    end: usize
- }
-
 /// This structure is used by shell to track its spawned applications. Each successfully
 /// evaluated command line will create a `Job`. Each job contains one or more tasks.
 /// Tasks are stored in `tasks` in the same sequence as in the command line.
@@ -141,6 +134,13 @@ enum AppErr {
     /// The terminal could not spawn a new task to run the new application.
     /// Includes the String error returned from the task spawn function.
     SpawnErr(String)
+}
+
+struct LineSlice {
+    // The starting index in the String for a line. (inclusive)
+    start: usize,
+    // The ending index in the String for a line. (exclusive)
+    end: usize
 }
 
 pub struct Shell {
@@ -1400,26 +1400,25 @@ impl Shell {
 
     fn execute_internal_less(&mut self, args: Vec<&str>) -> Result<(), &'static str> {
         if args.len() < 1 {
-            self.terminal.lock().print_to_terminal("Not enough arguments provided.\n".to_string());
+            self.terminal.lock().print_to_terminal("not enough arguments provided.\n".to_string());
             self.clear_cmdline(false)?;
             self.redisplay_prompt();
-            return Ok(())
+            Ok(())
         }
 
-        let file_path = args[0];
-        let content = self.get_content_string(file_path.to_string());
         self.less = true;
-
+        let file_path = args[0];
+        let _  = self.get_content_string(file_path.to_string());
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
-        self.parse_content(content.clone().unwrap_or("".to_string()));
-        let _ = self.display_content_slice(content.clone().unwrap_or("".to_string()), 0);
+        self.parse_content();
+        let _ = self.display_content_slice(0);
 
         self.redisplay_prompt();
         Ok(())
     }
  
-    fn display_content_slice(&mut self, content: String, line_start: usize)
+    fn display_content_slice(&mut self, line_start: usize)
         -> Result<(), &'static str> {
         // Get exclusive control of the terminal. It is locked through the whole function to
         // avoid the overhead of locking it multiple times.
@@ -1445,12 +1444,12 @@ impl Shell {
 
         self.terminal.lock().clear();
         self.terminal.lock().print_to_terminal(
-            content[start_indices.start..end_indices.end].to_string()
+            self.content[start_indices.start..end_indices.end].to_string()
         );
         self.terminal.lock().refresh_display()
     }
 
-    fn parse_content(&mut self, content: String) {
+    fn parse_content(&mut self) {
         // Get the width and height of the terminal screen.
         let (width, height) = self.terminal.lock().get_text_dimensions();
 
@@ -1468,7 +1467,7 @@ impl Shell {
    
         // Iterate through the whole file.
         // `c` is the current character. `str_idx` is the index of the first byte of the current character.
-        for (str_idx, c) in content.char_indices() {
+        for (str_idx, c) in self.content.char_indices() {
             // When we need to begin a new line, record the previous line in the map.
             if char_num_in_line == width || previous_char == '\n' {
                 self.map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: str_idx });
@@ -1479,14 +1478,14 @@ impl Shell {
             char_num_in_line += 1;
             previous_char = c;
         }
-        self.map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: content.len() });
+        self.map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: self.content.len() });
    
         for (line_num, line_slice) in &self.map {
             self.terminal.lock().print_to_terminal(format!("Line {}: start = {}, end = {}\n", line_num, line_slice.start, line_slice.end).to_string());
         }
     }
 
-    fn get_content_string(&self, file_path: String) -> Result<String, String> {
+    fn get_content_string(&mut self, file_path: String) -> Result<String, String> {
         let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
             return Err("failed to get current task".to_string());
         };
@@ -1522,6 +1521,7 @@ impl Shell {
                             }
                         };
                         //self.terminal.lock().print_to_terminal(read_string.to_string());
+                        self.content = read_string.to_string();
                         Ok(read_string.to_string())
                     }
                 }
