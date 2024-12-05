@@ -1776,7 +1776,6 @@ dependencies = [
  "libterm",
  "log",
  "path",
- "shell",
  "spin 0.9.4",
  "stdio",
  "task",

@@ -1286,7 +1286,7 @@ impl Shell {
     /// The print queue is handled first inside the loop iteration, which means that all print events in the print
     /// queue will always be printed to the text display before input events or any other managerial functions are handled. 
     /// This allows for clean appending to the scrollback buffer and prevents interleaving of text.
-    pub fn start(mut self) -> Result<(), &'static str> {
+    fn start(mut self) -> Result<(), &'static str> {
         let mut need_refresh = false;
         let mut need_prompt = false;
         self.redisplay_prompt();
