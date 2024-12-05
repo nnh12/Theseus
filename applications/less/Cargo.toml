@@ -32,5 +32,6 @@ path = "../../libs/stdio"
 [dependencies.log]
 version = "0.4.8"
 
+
 [lib]
 crate-type = ["rlib"]
