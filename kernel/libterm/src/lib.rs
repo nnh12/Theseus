@@ -449,40 +449,6 @@ impl Terminal {
         Ok(terminal)
     }
 
-    
-     pub fn text_editor(s: String) -> Result<Terminal, &'static str> {
-        let wm_ref = window_manager::WINDOW_MANAGER.get().ok_or("The window manager is not initialized")?;
-        let (window_width, window_height) = {
-            let wm = wm_ref.lock();
-            wm.get_screen_size()
-        };
-
-        let window = window::Window::new(
-            Coord::new(0, 0),
-            window_width,
-            window_height,
-            FONT_BACKGROUND_COLOR,
-        )?;
-
-        let area = window.area();
-        let text_display = TextDisplay::new(area.width(), area.height(), FONT_FOREGROUND_COLOR, FONT_BACKGROUND_COLOR)?;
-
-        let mut terminal = Terminal {
-            window,
-            scrollback_buffer: String::new(),
-            scroll_start_idx: 0,
-            is_scroll_end: true,
-            text_display,
-            cursor: Cursor::default(),
-        };
-        terminal.display_text()?;
-
-        terminal.print_to_terminal(s.clone());
-        Ok(terminal)
-    }
-
-
-
     /// Adds a string to be printed to the terminal to the terminal scrollback buffer.
     /// Note that one needs to call `refresh_display` to get things actually printed. 
     pub fn print_to_terminal(&mut self, s: String) {
