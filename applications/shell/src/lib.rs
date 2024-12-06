@@ -1444,7 +1444,7 @@ impl Shell {
     fn display_content_slice(&mut self) -> Result<(), &'static str> {
         // Calculate the last line to display. Make sure we don't extend over the end of the file.
         let (_width, height) = self.terminal.lock().get_text_dimensions();
-        let mut line_end: usize = self.line_start + (height) - 5; 
+        let mut line_end: usize = self.line_start + (height - 20); 
         
         if line_end > self.map.len() {
             line_end = self.map.len();
@@ -1472,9 +1472,7 @@ impl Shell {
     /// for each line. It stores index of each starting and ending char position of each line (separated by '\n)
     fn parse_content(&mut self) {
         // Get the width and height of the terminal screen.
-        let (width, height) = self.terminal.lock().get_text_dimensions();
-
-        self.terminal.lock().print_to_terminal(format!("{} {}\n", width, height).to_string());
+        let (width, _) = self.terminal.lock().get_text_dimensions();
    
         // Number of the current line.
         let mut cur_line_num: usize = 0;
@@ -1510,7 +1508,6 @@ impl Shell {
     fn get_content_string(&mut self, file_path: String) {
         let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
             self.terminal.lock().print_to_terminal("failed to get current task".to_string());
-            return;
         };
 
         let curr_dir = self.env.lock().working_dir.lock().get_absolute_path();
@@ -1525,7 +1522,6 @@ impl Shell {
                     // Checks if it is a directory
                     FileOrDir::Dir(directory) => {
                         self.terminal.lock().print_to_terminal(format!("{:?} a directory, cannot 'less' non-files.", directory.lock().get_name()));
-                        return;
                     }
                     // Checks if it is a file and reads it into a utf8 string
                     FileOrDir::File(file) => {
@@ -1534,13 +1530,11 @@ impl Shell {
                         let mut string_slice_as_bytes = vec![0; file_size];
                         if let Err(_e) = file_locked.read_at(&mut string_slice_as_bytes, 0) {
                             self.terminal.lock().print_to_terminal("Failed to read error".to_string());
-                            return;
                         }
                         let read_string = match str::from_utf8(&string_slice_as_bytes) {
                             Ok(string_slice) => string_slice,
                             Err(_utf8_err) => {
                                 self.terminal.lock().print_to_terminal("File was not a printable UTF-8 text file".to_string());
-                                return;
                             }
                         };
                         // Stores the content of the file as a string
