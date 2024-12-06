@@ -1483,7 +1483,9 @@ impl Shell {
         // The previous character during the iteration. Set '\0' as the initial value since we don't expect
         // to encounter this character in the beginning of the file.
         let mut previous_char: char = '\0';
-   
+        // Clear contents in map
+        self.map.clear();
+
         // Iterate through the whole file.
         // `c` is the current character. `str_idx` is the index of the first byte of the current character.
         for (str_idx, c) in self.content.char_indices() {
@@ -1498,17 +1500,20 @@ impl Shell {
             previous_char = c;
         }
         self.map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: self.content.len() });
+
+        for (line_num, line_slice) in &self.map {
+            info!("Line {}: start = {}, end = {}\n", line_num, line_slice.start, line_slice.end);
+        }
     }
 
     /// Stores the entire file as a string to be parsed by 'less' operation
-    fn get_content_string(&mut self, file_path: String) -> Result<String, String>{
+    fn get_content_string(&mut self, file_path: String) -> Result<String, String> {
         let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
-            self.terminal.lock().print_to_terminal("failed to get current task".to_string());
             return Err("failed to get current task".to_string());
         };
 
-        let curr_dir = self.env.lock().working_dir.lock().get_absolute_path();
-        let full_path = format!("{}/{}", curr_dir, file_path);
+        let prompt = self.env.lock().working_dir.lock().get_absolute_path();
+        let full_path = format!("{}/{}", prompt, file_path);
         let path = Path::new(full_path.as_str());
         
         // navigate to the filepath specified by first argument
@@ -1516,36 +1521,36 @@ impl Shell {
     
             Some(file_dir_enum) => {
                 match file_dir_enum {
-                    // Checks if it is a directory
                     FileOrDir::Dir(directory) => {
-                        self.terminal.lock().print_to_terminal(format!("{:?} a directory, cannot 'less' non-files.", directory.lock().get_name()));
-                        return Err(format!("Failed to read directory").to_string())
+                        Err(format!("{:?} a directory, cannot 'less' non-files.", directory.lock().get_name()))
                     }
-                    // Checks if it is a file and reads it into a utf8 string
                     FileOrDir::File(file) => {
                         let mut file_locked = file.lock();
                         let file_size = file_locked.len();
                         let mut string_slice_as_bytes = vec![0; file_size];
-                        if let Err(_e) = file_locked.read_at(&mut string_slice_as_bytes, 0) {
-                            self.terminal.lock().print_to_terminal("Failed to read error".to_string());
-                            return Err(format!("Failed to read file"));
-                        }
-                        let read_string = match str::from_utf8(&string_slice_as_bytes) {
-                            Ok(string_slice) => string_slice,
-                            Err(_utf8_err) => {
-                                self.terminal.lock().print_to_terminal("File was not a printable UTF-8 text file".to_string());
-                                return Err(format!("File was not a printable UTF-8 text file").to_string());
+                        let _num_bytes_read = match file_locked.read_at(&mut string_slice_as_bytes, 0) {
+                            Ok(num) => num,
+                            Err(e) => {
+                                self.terminal.lock().print_to_terminal("Failed to read error ".to_string());
+                                return Err(format!("Failed to file size: {:?}", e));
                             }
                         };
-                        // Stores the content of the file as a string
+                        let read_string = match str::from_utf8(&string_slice_as_bytes) {
+                            Ok(string_slice) => string_slice,
+                            Err(utf8_err) => {
+                                self.terminal.lock().print_to_terminal("File was not a printable UTF-8 text file".to_string());
+                                return Err(format!("Failed to read file: {:?}", utf8_err));
+                            }
+                        };
+                        //self.terminal.lock().print_to_terminal(read_string.to_string());
                         self.content = read_string.to_string();
-                        Ok(read_string.to_string())   
+                        Ok(read_string.to_string())
                     }
                 }
             },
             None => {
                 self.terminal.lock().print_to_terminal(format!("Path not found: {}\n", path).to_string());
-                return Err(format!("File was not found").to_string());
+                Ok("File not found".to_string()) 
             }
         }
     }
