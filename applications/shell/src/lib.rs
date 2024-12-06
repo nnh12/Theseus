@@ -1419,7 +1419,7 @@ impl Shell {
     }
 
     fn execute_internal_less(&mut self, args: Vec<&str>) -> Result<(), &'static str> {
-        if args.len() < 1 {
+        if args.is_empty() {
             self.terminal.lock().print_to_terminal("not enough arguments provided.\n".to_string());
             self.clear_cmdline(false)?;
             self.redisplay_prompt();
@@ -1509,7 +1509,7 @@ impl Shell {
         };
 
         let prompt = self.env.lock().working_dir.lock().get_absolute_path();
-        let full_path = format!("{}/{}", prompt.to_string(), file_path.to_string());
+        let full_path = format!("{}/{}", prompt, file_path);
         let path = Path::new(full_path.as_str());
         
         // navigate to the filepath specified by first argument
@@ -1545,7 +1545,7 @@ impl Shell {
                 }
             },
             None => {
-                self.terminal.lock().print_to_terminal(format!("Path not found: {}\n", path.to_string()).to_string());
+                self.terminal.lock().print_to_terminal(format!("Path not found: {}\n", path).to_string());
                 Ok("".to_string()) // Example: return empty string or a default value  
             }
         }
