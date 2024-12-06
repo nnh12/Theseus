@@ -506,7 +506,7 @@ impl Shell {
             return Ok(());
         }
 
-        
+        // Check if the Q key is pressed and exit from 'less' mode
         if keyevent.keycode == Keycode::Q && self.less{
             self.less = false;
             self.terminal.lock().clear();
@@ -514,21 +514,21 @@ impl Shell {
             return Ok(());
         }
 
-        // Cycles to the next previous command
+        // Check if the Up key is pressed and scroll up in 'less' mode
         if  keyevent.keycode == Keycode::Up && self.less {
             if self.line_start > 0 {
                 self.line_start -= 1;
             }
-            let _ = self.display_content_slice();
+            self.display_content_slice()?;
             return Ok(());
         }
 
-        // Cycles to the next previous command
+        // Check if the Down key is pressed and scroll down in 'less' mode
         if  keyevent.keycode == Keycode::Down && self.less {
             if self.line_start + 1 < self.map.len() {
                 self.line_start += 1;
             }
-            let _ = self.display_content_slice();
+            self.display_content_slice()?;
             return Ok(());
         }
 
@@ -1418,6 +1418,7 @@ impl Shell {
         }
     }
 
+    /// Executes the 'less' internal command to display the content of a file.
     fn execute_internal_less(&mut self, args: Vec<&str>) -> Result<(), &'static str> {
         if args.is_empty() {
             self.terminal.lock().print_to_terminal("not enough arguments provided.\n".to_string());
@@ -1426,24 +1427,24 @@ impl Shell {
             return Ok(())
         }
 
-        self.less = true;
         let file_path = args[0];
-        let _  = self.get_content_string(file_path.to_string());
+        self.less = true;
+        self.get_content_string(file_path.to_string());
         self.terminal.lock().clear();
         self.clear_cmdline(false)?;
         self.parse_content();
-        let _ = self.display_content_slice();
+        self.display_content_slice()?;
         self.redisplay_prompt();
         Ok(())
     }
  
+    
+    /// Display part of the file (may be whole file if the file is short) to the terminal, indicated
+    /// by line_start attribute
     fn display_content_slice(&mut self) -> Result<(), &'static str> {
-        // Get exclusive control of the terminal. It is locked through the whole function to
-        // avoid the overhead of locking it multiple times.
-
         // Calculate the last line to display. Make sure we don't extend over the end of the file.
         let (_width, height) = self.terminal.lock().get_text_dimensions();
-        let mut line_end: usize = self.line_start + (height-20);
+        let mut line_end: usize = self.line_start + (height) - 5; 
         
         if line_end > self.map.len() {
             line_end = self.map.len();
@@ -1467,6 +1468,8 @@ impl Shell {
         self.terminal.lock().refresh_display()
     }
 
+    /// This function parses the text file. It scans through the whole file and records the string slice
+    /// for each line. It stores index of each starting and ending char position of each line (separated by '\n)
     fn parse_content(&mut self) {
         // Get the width and height of the terminal screen.
         let (width, height) = self.terminal.lock().get_text_dimensions();
@@ -1503,13 +1506,15 @@ impl Shell {
         }
     }
 
-    fn get_content_string(&mut self, file_path: String) -> Result<String, String> {
+    /// Stores the entire file as a string to be parsed by 'less' operation
+    fn get_content_string(&mut self, file_path: String) {
         let Ok(curr_wd) = task::with_current_task(|t| t.get_env().lock().working_dir.clone()) else {
-            return Err("failed to get current task".to_string());
+            self.terminal.lock().print_to_terminal("failed to get current task".to_string());
+            return;
         };
 
-        let prompt = self.env.lock().working_dir.lock().get_absolute_path();
-        let full_path = format!("{}/{}", prompt, file_path);
+        let curr_dir = self.env.lock().working_dir.lock().get_absolute_path();
+        let full_path = format!("{}/{}", curr_dir, file_path);
         let path = Path::new(full_path.as_str());
         
         // navigate to the filepath specified by first argument
@@ -1517,36 +1522,34 @@ impl Shell {
     
             Some(file_dir_enum) => {
                 match file_dir_enum {
+                    // Checks if it is a directory
                     FileOrDir::Dir(directory) => {
-                        Err(format!("{:?} a directory, cannot 'less' non-files.", directory.lock().get_name()))
+                        self.terminal.lock().print_to_terminal(format!("{:?} a directory, cannot 'less' non-files.", directory.lock().get_name()));
+                        return;
                     }
+                    // Checks if it is a file and reads it into a utf8 string
                     FileOrDir::File(file) => {
                         let mut file_locked = file.lock();
                         let file_size = file_locked.len();
                         let mut string_slice_as_bytes = vec![0; file_size];
-                        let _num_bytes_read = match file_locked.read_at(&mut string_slice_as_bytes, 0) {
-                            Ok(num) => num,
-                            Err(e) => {
-                                self.terminal.lock().print_to_terminal("Failed to read error ".to_string());
-                                return Err(format!("Failed to file size: {:?}", e));
-                            }
-                        };
+                        if let Err(_e) = file_locked.read_at(&mut string_slice_as_bytes, 0) {
+                            self.terminal.lock().print_to_terminal("Failed to read error".to_string());
+                            return;
+                        }
                         let read_string = match str::from_utf8(&string_slice_as_bytes) {
                             Ok(string_slice) => string_slice,
-                            Err(utf8_err) => {
+                            Err(_utf8_err) => {
                                 self.terminal.lock().print_to_terminal("File was not a printable UTF-8 text file".to_string());
-                                return Err(format!("Failed to read file: {:?}", utf8_err));
+                                return;
                             }
                         };
-                        //self.terminal.lock().print_to_terminal(read_string.to_string());
+                        // Stores the content of the file as a string
                         self.content = read_string.to_string();
-                        Ok(read_string.to_string())
                     }
                 }
             },
             None => {
                 self.terminal.lock().print_to_terminal(format!("Path not found: {}\n", path).to_string());
-                Ok("".to_string()) // Example: return empty string or a default value  
             }
         }
     }
