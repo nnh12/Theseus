@@ -1446,7 +1446,7 @@ impl Shell {
         let (_width, height) = self.terminal.lock().get_text_dimensions();
         let mut line_end: usize = self.line_start + (height - 20); 
         
-        if line_end > self.map.len() {
+        if self.map.len() < line_end {
             line_end = self.map.len();
         }
 
@@ -1461,7 +1461,6 @@ impl Shell {
             None => return Err("failed to get the byte indices of the last line")
         };
 
-        info!("{}", self.content.len() - 1);
         self.terminal.lock().clear();
         self.terminal.lock().print_to_terminal(
             self.content[start_indices.start..end_indices.end].to_string()
