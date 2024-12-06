@@ -136,6 +136,7 @@ enum AppErr {
     SpawnErr(String)
 }
 
+/// This bundles start and end index char into one structure
 struct LineSlice {
     // The starting index in the String for a line. (inclusive)
     start: usize,
@@ -177,11 +178,11 @@ pub struct Shell {
     terminal: Arc<Mutex<Terminal>>,
     /// The indicator to show "text editing" mode
     less: bool,
-    // string to print
+    // String to store file
     content: String,
     // BTree Map to keep track of file new line indices
     map: BTreeMap<usize, LineSlice>,
-    // Line 
+    // Line to start the display
     line_start: usize
 }
 
@@ -1500,10 +1501,6 @@ impl Shell {
             previous_char = c;
         }
         self.map.insert(cur_line_num, LineSlice{ start: line_start_idx, end: self.content.len() });
-
-        for (line_num, line_slice) in &self.map {
-            info!("Line {}: start = {}, end = {}\n", line_num, line_slice.start, line_slice.end);
-        }
     }
 
     /// Stores the entire file as a string to be parsed by 'less' operation
@@ -1542,7 +1539,6 @@ impl Shell {
                                 return Err(format!("Failed to read file: {:?}", utf8_err));
                             }
                         };
-                        //self.terminal.lock().print_to_terminal(read_string.to_string());
                         self.content = read_string.to_string();
                         Ok(read_string.to_string())
                     }
