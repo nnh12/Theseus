@@ -62,12 +62,16 @@ pub fn init(
     cfg_if::cfg_if! {
         if #[cfg(epoch_scheduler)] {
             let scheduler = scheduler_epoch::Scheduler::new(idle_task);
+            debug!("The current scheduler is the epoch scheduler.");
         } else if #[cfg(priority_scheduler)] {
             let scheduler = scheduler_priority::Scheduler::new(idle_task);
+            debug!("The current scheduler is the priority scheduler.");
         } else {
             let scheduler = scheduler_round_robin::Scheduler::new(idle_task);
+            debug!("The current round robin is the epoch scheduler.");
         }
     }
+    
     task::scheduler::set_policy(cpu_id, scheduler);
     task::scheduler::add_task_to(cpu_id, exitable_bootstrap_task.clone());
 
