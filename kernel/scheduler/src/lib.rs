@@ -30,6 +30,19 @@ pub use task::scheduler::{inherit_priority, priority, schedule, set_priority};
 /// - `make THESEUS_CONFIG=epoch_scheduler`: epoch scheduler
 /// - `make THESEUS_CONFIG=priority_scheduler`: priority scheduler
 pub fn init() -> Result<(), &'static str> {
+    // Determine the scheduler type at runtime and log it
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+    {
+        let scheduler_type = if cfg!(feature = "epoch_scheduler") {
+            "epoch scheduler"
+        } else if cfg!(feature = "priority_scheduler") {
+            "priority scheduler"
+        } else {
+            "round-robin scheduler"
+        };
+        log::info!("Scheduler type: {}", scheduler_type);
+    }
+
     #[cfg(target_arch = "x86_64")] {
         interrupts::register_interrupt(
             CPU_LOCAL_TIMER_IRQ,

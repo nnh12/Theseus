@@ -72,7 +72,6 @@ exclude = [
 	"applications/channel_eval",
 	"applications/heap_eval",
 	"applications/rq_eval",
-	"applications/scheduler_eval",
 
 	## Exclude application crates used for testing specific Theseus functionality.
 	## TODO: move these to a specific "tests" folder so we can exclude that entire folder.
@@ -89,7 +88,7 @@ exclude = [
 	"applications/test_panic",
 	"applications/test_preemption_counter",
 	"applications/test_restartable",
-	"applications/test_scheduler",
+	###"applications/test_scheduler",
 	"applications/test_std_fs",
 	"applications/test_sync_block",
 	"applications/test_task_cancel",
