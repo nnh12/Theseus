@@ -68,7 +68,7 @@ pub fn init(
             debug!("The current scheduler is the priority scheduler.");
         } else {
             let scheduler = scheduler_round_robin::Scheduler::new(idle_task);
-            debug!("The current round robin is the epoch scheduler.");
+            debug!("The current scheduler is the epoch scheduler.");
         }
     }
     
