@@ -1,7 +1,7 @@
 [package]
 authors = ["Nathan Hsiao <nathan40241@gmail.com>"]
-name = "scheduler_fcfs"
-description = "Provides first come first serve scheduling functionality"
+name = "scheduler_sjf"
+description = "Provides shortest job first scheduling functionality"
 version = "0.1.0"
 edition = "2021"
 

@@ -3,17 +3,23 @@ extern crate alloc;
 use alloc::collections::VecDeque;
 use task::TaskRef;
 
-pub struct FCFSScheduler {
+pub struct Scheduler {
     idle_task: TaskRef,
     queue: VecDeque<TaskRef>,
 }
 
-impl FCFSScheduler {
+impl Scheduler {
     pub const fn new(idle_task: TaskRef) -> Self {
         Self {
             idle_task,
             queue: VecDeque::new(),
         }
+    }
+
+    /// Compares the burst time of the idle task with another task.
+    /// Returns `true` if the idle task's burst time is less than the other task's burst time.
+    pub fn compare_idle_task_burst_time(&self, other_task: &TaskRef) -> bool {
+        self.idle_task.burst_time() < other_task.burst_time()
     }
 }
 
